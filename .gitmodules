@@ -2,6 +2,6 @@
 	path = ftcandroidlibrary
 	url = http://github.com/lasarobotics/ftcandroidlibrary
 
-[submodule "ftcvision"]
-	path = ftcvision
+[submodule "FTCVision"]
+	path = FTCVision
 	url = https://github.com/lasarobotics/FTCVision
