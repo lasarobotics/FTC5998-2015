@@ -46,6 +46,6 @@ public class FtcOpModeRegister implements OpModeRegister {
    * @param manager op mode manager
    */
   public void register(OpModeManager manager) {
-
+  manager.register("FourWheelDrive", FourWheelDrive.class);
   }
 }
