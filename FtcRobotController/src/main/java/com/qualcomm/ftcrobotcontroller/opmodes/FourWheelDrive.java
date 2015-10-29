@@ -22,13 +22,10 @@ public class FourWheelDrive extends OpMode {
 
     public void loop() {
         firstController.update(gamepad1);
-        Tank.Motor4(frontLeft, frontRight, backLeft, backRight, firstController.left_stick_y, firstController.right_stick_y);
+        Tank.motor4(frontLeft, frontRight, backLeft, backRight, firstController.left_stick_y, firstController.right_stick_y);
     }
 
     public void stop() {
         System.out.println("");
     }
 }
-
-}
-
