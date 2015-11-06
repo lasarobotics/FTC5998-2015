@@ -9,8 +9,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 public class FourWheelDrive extends OpMode {
 
     DcMotor frontLeft, frontRight, backLeft, backRight;
-    DcMotor lift, intake;
+    DcMotor intake;
     Controller firstController;
+    Controller secondController;
 
     public void init() {
         gamepad1.setJoystickDeadzone(.1F);
@@ -19,7 +20,6 @@ public class FourWheelDrive extends OpMode {
         frontRight = hardwareMap.dcMotor.get("frontRight");
         backLeft = hardwareMap.dcMotor.get("backLeft");
         backRight = hardwareMap.dcMotor.get("backRight");
-        lift = hardwareMap.dcMotor.get("lift");
         intake = hardwareMap.dcMotor.get("intake");
 
         firstController = new Controller(gamepad1);
@@ -29,18 +29,18 @@ public class FourWheelDrive extends OpMode {
     public void loop() {
         firstController.update(gamepad1);
         secondController.update(gamepad2);
-        Tank.motor4(frontLeft, frontRight, backLeft, backRight, firstController.left_stick_y, firstController.right_stick_y);
-        if (secondController.a == 1) {
+        Tank.motor4(frontLeft, frontRight, backLeft, backRight, -firstController.left_stick_y, firstController.right_stick_y);
+        if (firstController.dpad_up == 1) {
             intake.setPower(1);
         }
-        else if (secondController.x == 1) {
+        if (firstController.dpad_down == 1) {
             intake.setPower(-1);
         }
-        if (secondController.b == 1) {
-            lift.setPower(1);
+        if (firstController.dpad_right == 1) {
+            intake.setPower(0);
         }
-        else if (secondController.y == 1) {
-            lift.setPower(-1);
+        if (firstController.dpad_left == 1) {
+            intake.setPower(0);
         }
         
     }
