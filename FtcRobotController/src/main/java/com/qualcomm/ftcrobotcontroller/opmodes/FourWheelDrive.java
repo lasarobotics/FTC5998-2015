@@ -5,11 +5,13 @@ import com.lasarobotics.library.controller.Controller;
 import com.lasarobotics.library.drive.Tank;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 
 public class FourWheelDrive extends OpMode {
 
     DcMotor frontLeft, frontRight, backLeft, backRight;
     DcMotor intake;
+    Servo lift;
     Controller firstController;
     Controller secondController;
 
@@ -21,6 +23,7 @@ public class FourWheelDrive extends OpMode {
         backLeft = hardwareMap.dcMotor.get("backLeft");
         backRight = hardwareMap.dcMotor.get("backRight");
         intake = hardwareMap.dcMotor.get("intake");
+        lift = hardwareMap.servo.get("lift");
 
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
@@ -41,6 +44,12 @@ public class FourWheelDrive extends OpMode {
         }
         if (firstController.dpad_left == 1) {
             intake.setPower(0);
+        }
+        if (firstController.x == 1) {
+            lift.setPosition(lift.getPosition() + .05);
+        }
+        else if (firstController.b == 1) {
+            lift.setPosition(lift.getPosition() - .05);
         }
         
     }
