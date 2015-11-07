@@ -23,6 +23,7 @@ public class FourWheelDrive extends OpMode {
         backLeft = hardwareMap.dcMotor.get("backLeft");
         backRight = hardwareMap.dcMotor.get("backRight");
         intake = hardwareMap.dcMotor.get("intake");
+        lift = hardwareMap.servo.get("lift");
 
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
