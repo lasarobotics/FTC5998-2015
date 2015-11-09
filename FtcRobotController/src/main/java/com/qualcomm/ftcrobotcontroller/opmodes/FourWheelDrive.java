@@ -30,28 +30,31 @@ public class FourWheelDrive extends OpMode {
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
 
-        liftServo.setPosition(.5);
+        liftServo.setPosition(0.5);
     }
 
     public void loop() {
         firstController.update(gamepad1);
         secondController.update(gamepad2);
         Tank.motor4(frontLeft, frontRight, backLeft, backRight, -firstController.left_stick_y, firstController.right_stick_y);
+
         if (firstController.dpad_up == ButtonState.PRESSED) {
             intake.setPower(1);
         }
-        if (firstController.dpad_down == ButtonState.PRESSED) {
+        else if (firstController.dpad_down == ButtonState.PRESSED) {
             intake.setPower(-1);
         }
-        if(firstController.left_bumper == ButtonState.PRESSED){
+        else if (firstController.left_bumper == ButtonState.PRESSED){
             intake.setPower(0);
         }
+
         if (firstController.x == 1) {
-            liftServo.setPosition(MathUtil.coerce(0,1,liftServo.getPosition() + .05));
+            liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() + 0.05));
         }
         else if (firstController.b == 1) {
-            liftServo.setPosition(MathUtil.coerce(0,1,liftServo.getPosition() - .05));
+            liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() - 0.05));
         }
+
         if (firstController.y == ButtonState.PRESSED) {
             lift.setPower(.25);
         }
