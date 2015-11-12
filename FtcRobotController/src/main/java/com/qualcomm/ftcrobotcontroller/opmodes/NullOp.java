@@ -59,7 +59,11 @@ public class NullOp extends OpMode {
   public void init_loop() {
     startDate = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date());
     runtime.reset();
+<<<<<<< HEAD
     telemetry.addData("Null Op Init Loop", runtime.toStri2ng());
+=======
+    telemetry.addData("Null Op Init Loop", runtime.toString());
+>>>>>>> feature-update-ftc
   }
 
   /*

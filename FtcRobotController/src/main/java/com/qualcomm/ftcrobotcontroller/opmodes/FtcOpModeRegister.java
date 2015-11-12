@@ -46,6 +46,17 @@ public class FtcOpModeRegister implements OpModeRegister {
    * @param manager op mode manager
    */
   public void register(OpModeManager manager) {
-  manager.register("FourWheelDrive", FourWheelDrive.class);
+
+    /*
+     * register your op modes here.
+     * The first parameter is the name of the op mode
+     * The second parameter is the op mode class property
+     *
+     * If two or more op modes are registered with the same name, the app will display an error.
+     */
+
+    manager.register("NullOp", NullOp.class);
+    manager.register("FourWheelDrive", FourWheelDrive.class);
+    manager.register("LiftAndIntake", LiftAndIntake.class);
   }
 }
