@@ -11,13 +11,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class FourWheelDrive extends OpMode {
 
     DcMotor frontLeft, frontRight, backLeft, backRight;
-<<<<<<< HEAD
-    DcMotor intake;
-    Servo lift;
-=======
     DcMotor intake, lift;
     Servo liftServo;
->>>>>>> feature-update-ftc
     Controller firstController;
     Controller secondController;
 
@@ -29,13 +24,8 @@ public class FourWheelDrive extends OpMode {
         backLeft = hardwareMap.dcMotor.get("backLeft");
         backRight = hardwareMap.dcMotor.get("backRight");
         intake = hardwareMap.dcMotor.get("intake");
-<<<<<<< HEAD
-        lift = hardwareMap.servo.get("lift");
-=======
         lift = hardwareMap.dcMotor.get("lift");
         liftServo = hardwareMap.servo.get("liftServo");
-
->>>>>>> feature-update-ftc
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
 
@@ -73,13 +63,7 @@ public class FourWheelDrive extends OpMode {
         if (firstController.right_bumper == ButtonState.PRESSED){
             lift.setPower(0);
         }
-        if (firstController.x == 1) {
-            lift.setPosition(lift.getPosition() + .05);
-        }
-        else if (firstController.b == 1) {
-            lift.setPosition(lift.getPosition() - .05);
-        }
-        
+                
     }
 
     public void stop() {
