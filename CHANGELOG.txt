@@ -1,0 +1,13 @@
+# Change Log
+All notable changes to this project will be documented in this file.
+
+## [1.0.1] - 2015-11-07
+### Added
+- Bind Joysticks to Drivetrain
+- Set Joystick Deadzone to `.1F`
+- Bind D-Pad to Intake
+  - D-Pad up moves intake motor so that balls are pulled in
+  - D-Pad down moves intake motor so that balls are pushed out
+  - Right bumper stops the intake motor
+- Bind Buttons "y" and "a" to Lift Motor and Buttons "b" and "x" to Lift Servo
+- Right Bumper Stops Lift Motor
