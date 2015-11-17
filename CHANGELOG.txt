@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+### Added
+### Changed
+### Fixed
+
 ## [1.0.1] - 2015-11-07
 ### Added
 - Bind Joysticks to Drivetrain
@@ -11,3 +16,5 @@ All notable changes to this project will be documented in this file.
   - Right bumper stops the intake motor
 - Bind Buttons "y" and "a" to Lift Motor and Buttons "b" and "x" to Lift Servo
 - Right Bumper Stops Lift Motor
+
+## [1.0.0] [YANKED]
