@@ -15,6 +15,7 @@ public class FourWheelDrive extends OpMode {
     Servo liftServo;
     Controller firstController;
     Controller secondController;
+    boolean moveLift = false;
 
     public void init() {
         gamepad1.setJoystickDeadzone(.1F);
@@ -37,26 +38,26 @@ public class FourWheelDrive extends OpMode {
         secondController.update(gamepad2);
         Tank.motor4(frontLeft, frontRight, backLeft, backRight, -firstController.left_stick_y, firstController.right_stick_y);
 
-        if (firstController.dpad_up == ButtonState.PRESSED) {
+        if (secondController.dpad_up == ButtonState.PRESSED) {
             intake.setPower(1);
-        } else if (firstController.dpad_down == ButtonState.PRESSED) {
+        } else if (secondController.dpad_down == ButtonState.PRESSED) {
             intake.setPower(-1);
-        } else if (firstController.left_bumper == ButtonState.PRESSED) {
+        } else if (secondController.left_bumper == ButtonState.PRESSED) {
             intake.setPower(0);
         }
 
-        if (firstController.x == 1) {
+        if (secondController.x == 1) {
             liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() + 0.05));
-        } else if (firstController.b == 1) {
+        } else if (secondController.b == 1) {
             liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() - 0.05));
         }
 
-        if (firstController.y == ButtonState.PRESSED) {
+        if (secondController.y == ButtonState.PRESSED) {
             lift.setPower(.25);
-        } else if (firstController.a == ButtonState.PRESSED) {
+        } else if (secondController.a == ButtonState.PRESSED) {
             lift.setPower(-.25);
         }
-        if (firstController.right_bumper == ButtonState.PRESSED) {
+        if (secondController.right_bumper == ButtonState.PRESSED) {
             lift.setPower(0);
         }
 
