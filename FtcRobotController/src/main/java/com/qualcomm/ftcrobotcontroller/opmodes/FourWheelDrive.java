@@ -39,31 +39,27 @@ public class FourWheelDrive extends OpMode {
 
         if (firstController.dpad_up == ButtonState.PRESSED) {
             intake.setPower(1);
-        }
-        else if (firstController.dpad_down == ButtonState.PRESSED) {
+        } else if (firstController.dpad_down == ButtonState.PRESSED) {
             intake.setPower(-1);
-        }
-        else if (firstController.left_bumper == ButtonState.PRESSED){
+        } else if (firstController.left_bumper == ButtonState.PRESSED) {
             intake.setPower(0);
         }
 
         if (firstController.x == 1) {
             liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() + 0.05));
-        }
-        else if (firstController.b == 1) {
+        } else if (firstController.b == 1) {
             liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() - 0.05));
         }
 
         if (firstController.y == ButtonState.PRESSED) {
             lift.setPower(.25);
-        }
-        else if (firstController.a == ButtonState.PRESSED) {
+        } else if (firstController.a == ButtonState.PRESSED) {
             lift.setPower(-.25);
         }
-        if (firstController.right_bumper == ButtonState.PRESSED){
+        if (firstController.right_bumper == ButtonState.PRESSED) {
             lift.setPower(0);
         }
-                
+
     }
 
     public void stop() {
