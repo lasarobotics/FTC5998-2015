@@ -10,15 +10,17 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 public class FourWheelDrive extends OpMode {
 
+    static final int LIFT_EXTENSION_TIME = 3;
     DcMotor frontLeft, frontRight, backLeft, backRight;
     DcMotor intake, lift;
     Servo liftServo;
     Controller firstController;
     Controller secondController;
-    boolean moveLift = false;
+    boolean extendLift = false;
+    long startTime;
 
     public void init() {
-        gamepad1.setJoystickDeadzone(.1F);
+        gamepad1.setJoystickDeadzone(.1F); // make sure we don't get fake values
         gamepad2.setJoystickDeadzone(.1F);
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
         frontRight = hardwareMap.dcMotor.get("frontRight");
@@ -29,14 +31,15 @@ public class FourWheelDrive extends OpMode {
         liftServo = hardwareMap.servo.get("liftServo");
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
-
-        liftServo.setPosition(0.5);
+        liftServo.setPosition(0.5); // set the servo halfway in between 0 and 1, so there can be
+        // 10 increments on either side
     }
 
     public void loop() {
         firstController.update(gamepad1);
         secondController.update(gamepad2);
-        Tank.motor4(frontLeft, frontRight, backLeft, backRight, -firstController.left_stick_y, firstController.right_stick_y);
+        Tank.motor4(frontLeft, frontRight, backLeft, backRight, -firstController.left_stick_y,
+                firstController.right_stick_y);
 
         if (secondController.dpad_up == ButtonState.PRESSED) {
             intake.setPower(1);
@@ -52,22 +55,30 @@ public class FourWheelDrive extends OpMode {
             liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() - 0.05));
         }
 
-        if (secondController.y == ButtonState.PRESSED) {
-            lift.setPower(.25);
-        } else if (secondController.a == ButtonState.PRESSED) {
-            lift.setPower(-.25);
+        if ((secondController.y == ButtonState.PRESSED) && (!extendLift)) { // check if y is
+        // pressed and if the lift is already running before starting the lift
+            extendLift = true;
+            startTime = System.currentTimeMillis() / 1000;
+        } else if ((System.currentTimeMillis() / 1000) >= (startTime + LIFT_EXTENSION_TIME)) {
+            extendLift = false;
+        } else if ((secondController.a == ButtonState.PRESSED) && extendLift) { // abort the lift
+            extendLift = false;
         }
-        if (secondController.right_bumper == ButtonState.PRESSED) {
+
+        if (extendLift) { // check if the lift should be running
+            lift.setPower(.20);
+        } else if (!extendLift) { // or not run
             lift.setPower(0);
         }
 
     }
 
-    public void stop() {
+    public void stop() { // make sure nothing moves after the end of the match
         intake.setPower(0);
         frontLeft.setPower(0);
         frontRight.setPower(0);
         backLeft.setPower(0);
         backRight.setPower(0);
+        lift.setPower(0);
     }
 }
