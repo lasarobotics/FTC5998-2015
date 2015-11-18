@@ -17,6 +17,7 @@ public class FourWheelDrive extends OpMode {
     Controller firstController;
     Controller secondController;
     boolean extendLift = false;
+    boolean backwardsLift = false;
     long startTime;
 
     public void init() {
@@ -56,8 +57,14 @@ public class FourWheelDrive extends OpMode {
         }
 
         if ((secondController.y == ButtonState.PRESSED) && (!extendLift)) { // check if y is
-        // pressed and if the lift is already running before starting the lift
+            // pressed and if the lift is already running before starting the lift
             extendLift = true;
+            backwardsLift = false;
+            startTime = System.currentTimeMillis() / 1000;
+        } else if ((secondController.b == ButtonState.PRESSED) && (!extendLift)) { // check if b is
+            // pressed and if the lift is already running before starting the lift
+            extendLift = true;
+            backwardsLift = true;
             startTime = System.currentTimeMillis() / 1000;
         } else if ((System.currentTimeMillis() / 1000) >= (startTime + LIFT_EXTENSION_TIME)) {
             extendLift = false;
@@ -65,7 +72,9 @@ public class FourWheelDrive extends OpMode {
             extendLift = false;
         }
 
-        if (extendLift) { // check if the lift should be running
+        if (extendLift && backwardsLift) { // check if the lift should be running
+            lift.setPower(-.20);
+        } else if (extendLift) {
             lift.setPower(.20);
         } else if (!extendLift) { // or not run
             lift.setPower(0);
