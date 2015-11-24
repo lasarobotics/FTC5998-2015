@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+ - Hanger control added
 ### Changed
  - Lift movement is now based on time
 ### Fixed

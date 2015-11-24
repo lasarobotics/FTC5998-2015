@@ -10,15 +10,11 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 public class FourWheelDrive extends OpMode {
 
-    static final int LIFT_EXTENSION_TIME = 3;
     DcMotor frontLeft, frontRight, backLeft, backRight;
     DcMotor intake, lift;
-    Servo liftServo;
+    Servo liftServo, hanger;
     Controller firstController;
     Controller secondController;
-    boolean extendLift = false;
-    boolean backwardsLift = false;
-    long startTime;
 
     public void init() {
         gamepad1.setJoystickDeadzone(.1F); // make sure we don't get fake values
@@ -30,6 +26,7 @@ public class FourWheelDrive extends OpMode {
         intake = hardwareMap.dcMotor.get("intake");
         lift = hardwareMap.dcMotor.get("lift");
         liftServo = hardwareMap.servo.get("liftServo");
+        hanger = hardwareMap.servo.get("hanger");
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
         liftServo.setPosition(0.5); // set the servo halfway in between 0 and 1, so there can be
@@ -56,28 +53,18 @@ public class FourWheelDrive extends OpMode {
             liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() - 0.05));
         }
 
-        if ((secondController.y == ButtonState.PRESSED) && (!extendLift)) { // check if y is
-            // pressed and if the lift is already running before starting the lift
-            extendLift = true;
-            backwardsLift = false;
-            startTime = System.currentTimeMillis() / 1000;
-        } else if ((secondController.b == ButtonState.PRESSED) && (!extendLift)) { // check if b is
-            // pressed and if the lift is already running before starting the lift
-            extendLift = true;
-            backwardsLift = true;
-            startTime = System.currentTimeMillis() / 1000;
-        } else if ((System.currentTimeMillis() / 1000) >= (startTime + LIFT_EXTENSION_TIME)) {
-            extendLift = false;
-        } else if ((secondController.a == ButtonState.PRESSED) && extendLift) { // abort the lift
-            extendLift = false;
-        }
-
-        if (extendLift && backwardsLift) { // check if the lift should be running
-            lift.setPower(-.20);
-        } else if (extendLift) {
-            lift.setPower(.20);
-        } else if (!extendLift) { // or not run
+        if (secondController.right_bumper == ButtonState.HELD) {
+            lift.setPower(1);
+        } else if (secondController.right_trigger == ButtonState.HELD) {
+            lift.setPower(-1);
+        } else {
             lift.setPower(0);
+        }
+        if (secondController.y == ButtonState.PRESSED){
+            hanger.setPosition(1.0);
+        }
+        else if (secondController.a == ButtonState.PRESSED){
+            hanger.setPosition(0e);
         }
 
     }
