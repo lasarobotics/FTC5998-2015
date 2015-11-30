@@ -39,6 +39,12 @@ public class FourWheelDrive extends OpMode {
         Tank.motor4(frontLeft, frontRight, backLeft, backRight, -firstController.left_stick_y,
                 firstController.right_stick_y);
 
+        if (firstController.x == 1) {
+            liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() + 0.20));
+        } else if (firstController.b == 1) {
+            liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() - 0.20));
+        }
+
         if (secondController.dpad_up == ButtonState.PRESSED) {
             intake.setPower(1);
         } else if (secondController.dpad_down == ButtonState.PRESSED) {
@@ -64,7 +70,7 @@ public class FourWheelDrive extends OpMode {
             hanger.setPosition(1.0);
         }
         else if (secondController.a == ButtonState.PRESSED){
-            hanger.setPosition(0e);
+            hanger.setPosition(0.0);
         }
 
     }
