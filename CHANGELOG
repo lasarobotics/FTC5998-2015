@@ -3,9 +3,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+ - Added goal release servo and bound it to x and b on the first controller
+ - Hanger control added
 ### Changed
- - Move non-drivetrain functions to second controller
+ - Lift movement is now based on time
 ### Fixed
+ - Move non-drivetrain functions to second controller
 
 ## [1.0.1] - 2015-11-07
 ### Added
