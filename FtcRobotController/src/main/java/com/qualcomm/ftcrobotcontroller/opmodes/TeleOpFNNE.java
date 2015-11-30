@@ -12,10 +12,11 @@ public class TeleOpFNNE extends OpMode {
 
     DcMotor frontLeft, frontRight, backLeft, backRight;
     DcMotor intake, lift;
-    Servo liftServo, hanger;
+    Servo liftServo, hanger, goal;
     Controller firstController;
     Controller secondController;
 
+    @Override
     public void init() {
         gamepad1.setJoystickDeadzone(.1F); // make sure we don't get fake values
         gamepad2.setJoystickDeadzone(.1F);
@@ -27,12 +28,14 @@ public class TeleOpFNNE extends OpMode {
         lift = hardwareMap.dcMotor.get("lift");
         liftServo = hardwareMap.servo.get("liftServo");
         hanger = hardwareMap.servo.get("hanger");
+        goal = hardwareMap.servo.get("goal");
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
         liftServo.setPosition(0.5); // set the servo halfway in between 0 and 1, so there can be
         // 10 increments on either side
     }
 
+    @Override
     public void loop() {
         firstController.update(gamepad1);
         secondController.update(gamepad2);
@@ -40,9 +43,9 @@ public class TeleOpFNNE extends OpMode {
                 firstController.right_stick_y);
 
         if (firstController.x == 1) {
-            liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() + 0.20));
+            goal.setPosition(MathUtil.coerce(0.0, 1.0, goal.getPosition() + 0.20));
         } else if (firstController.b == 1) {
-            liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() - 0.20));
+            goal.setPosition(MathUtil.coerce(0.0, 1.0, goal.getPosition() - 0.20));
         }
 
         if (secondController.dpad_up == ButtonState.PRESSED) {
@@ -75,6 +78,7 @@ public class TeleOpFNNE extends OpMode {
 
     }
 
+    @Override
     public void stop() { // make sure nothing moves after the end of the match
         intake.setPower(0);
         frontLeft.setPower(0);

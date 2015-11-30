@@ -31,7 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
+import com.lasarobotics.library.controller.Controller;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.text.SimpleDateFormat;
@@ -46,29 +49,34 @@ public class AutonomousFNNE extends OpMode {
 
     private String startDate;
     private ElapsedTime runtime = new ElapsedTime();
+    DcMotor frontLeft, frontRight, backLeft, backRight;
+    DcMotor intake, lift;
+    Servo liftServo, hanger, goal;
 
     @Override
     public void init() {
+        frontLeft = hardwareMap.dcMotor.get("frontLeft");
+        frontRight = hardwareMap.dcMotor.get("frontRight");
+        backLeft = hardwareMap.dcMotor.get("backLeft");
+        backRight = hardwareMap.dcMotor.get("backRight");
+        intake = hardwareMap.dcMotor.get("intake");
+        lift = hardwareMap.dcMotor.get("lift");
+        liftServo = hardwareMap.servo.get("liftServo");
+        hanger = hardwareMap.servo.get("hanger");
+        goal = hardwareMap.servo.get("goal");
+        liftServo.setPosition(0.5);
     }
 
-    /*
-       * Code to run when the op mode is first enabled goes here
-       * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#start()
-       */
-    @Override
-    public void init_loop() {
-        startDate = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date());
-        runtime.reset();
-        telemetry.addData("Null Op Init Loop", runtime.toString());
-    }
-
-    /*
-     * This method will be called repeatedly in a loop
-     * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#loop()
-     */
     @Override
     public void loop() {
-        telemetry.addData("1 Start", "NullOp started at " + startDate);
+        startDate = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date());
+        runtime.reset();
+        telemetry.addData("5998 Autonomous Init Loop", runtime.toString());
+    }
+
+    @Override
+    public void stop() {
+        telemetry.addData("1 Start", "5998 Autonomous started at " + startDate);
         telemetry.addData("2 Status", "running for " + runtime.toString());
     }
 }
