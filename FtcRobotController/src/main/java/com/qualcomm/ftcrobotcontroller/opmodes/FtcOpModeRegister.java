@@ -61,7 +61,7 @@ public class FtcOpModeRegister implements OpModeRegister {
     manager.register("MonkeyCWrite", MonkeyCWrite.class);
     manager.register("Test", MonkeyCWriteTest.class);
     manager.register("Auto",Auto.class);
-      manager.register("Vision", BasicVisionSample.class);
+    manager.register("Vision", BasicVisionSample.class);
 
   }
 }
