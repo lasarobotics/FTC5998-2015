@@ -13,9 +13,13 @@ public class FourWheelDrive extends OpMode {
     DcMotor frontLeft, frontRight, backLeft, backRight;
     DcMotor intake, lift;
     Servo liftServo;
+    Servo liftStringServoOne, liftStringServoTwo;
     Controller firstController;
     Controller secondController;
     Servo hanger, goal;
+    double positionOne;
+    double positionTwo;
+
 
     public void init() {
         gamepad1.setJoystickDeadzone(.1F); // make sure we don't get fake values
@@ -27,6 +31,8 @@ public class FourWheelDrive extends OpMode {
         intake = hardwareMap.dcMotor.get("intake");
         lift = hardwareMap.dcMotor.get("lift");
         liftServo = hardwareMap.servo.get("liftServo");
+        liftStringServoOne = hardwareMap.servo.get("liftStringServoOne");
+        liftStringServoTwo = hardwareMap.servo.get("liftStringServoTwo");
         hanger = hardwareMap.servo.get("hanger");
         goal = hardwareMap.servo.get("goal");
         firstController = new Controller(gamepad1);
@@ -34,6 +40,11 @@ public class FourWheelDrive extends OpMode {
         liftServo.setPosition(0.5); // set the servo halfway in between 0 and 1, so there can be
         // 10 increments on either side
         goal.setPosition(0.5);
+        hanger.setPosition(0);
+        positionOne = liftStringServoOne.getPosition();
+        positionTwo = liftStringServoTwo.getPosition();
+        liftStringServoOne.setPosition(positionOne);
+        liftStringServoOne.setPosition(positionTwo);
     }
 
     public void loop() {
@@ -64,16 +75,26 @@ public class FourWheelDrive extends OpMode {
 
         if (secondController.right_bumper == ButtonState.HELD){
             lift.setPower(.2);
+            liftStringServoOne.setDirection(Servo.Direction.FORWARD);
+            liftStringServoTwo.setDirection(Servo.Direction.FORWARD);
+            positionOne = liftStringServoOne.getPosition();
+            positionTwo = liftStringServoTwo.getPosition();
         }
         else if (secondController.right_trigger == 1.0){
             lift.setPower(-.2);
+            liftStringServoOne.setDirection(Servo.Direction.REVERSE);
+            liftStringServoTwo.setDirection(Servo.Direction.REVERSE);
+            positionOne = liftStringServoOne.getPosition();
+            positionTwo = liftStringServoTwo.getPosition();
         }
         else{
             lift.setPower(0);
+            liftStringServoOne.setPosition(positionOne);
+            liftStringServoOne.setPosition(positionTwo);
         }
 
         if (secondController.a == ButtonState.PRESSED){
-            hanger.setPosition(1);
+            hanger.setPosition(0.951);
         }
         else if (secondController.y == ButtonState.PRESSED){
             hanger.setPosition(0);
