@@ -1,9 +1,7 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
-import com.lasarobotics.library.controller.Controller;
 import com.lasarobotics.library.util.MathUtil;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.GyroSensor;
@@ -61,15 +59,9 @@ public class Auto extends LinearOpMode {
     }
 
     private void runForEncoderCounts(int counts, double power) throws InterruptedException {
-        frontLeft.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-        frontRight.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-        backRight.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-        backLeft.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-
-
         backLeft.setMode(DcMotorController.RunMode.RESET_ENCODERS);
         waitOneFullHardwareCycle();
-        backLeft.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+        backLeft.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
 
         frontLeft.setPower(power);
         frontRight.setPower(power);
@@ -91,11 +83,6 @@ public class Auto extends LinearOpMode {
         backRight.setPower(0);
     }
     public void turnToDeg(int deg, double power) throws InterruptedException {
-        frontLeft.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-        frontRight.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-        backRight.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-        backLeft.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-
         frontLeft.setPower(power);
         frontRight.setPower(-power);
         backLeft.setPower(power);
