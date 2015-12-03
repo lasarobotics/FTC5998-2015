@@ -101,5 +101,7 @@ public class FourWheelDrive extends OpMode {
         backLeft.setPower(0);
         backRight.setPower(0);
         lift.setPower(0);
+        liftStringServoOne.setPosition(.53);
+        liftStringServoTwo.setPosition(.53);
     }
 }
