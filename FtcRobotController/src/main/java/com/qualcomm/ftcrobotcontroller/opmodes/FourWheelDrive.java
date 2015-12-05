@@ -59,7 +59,9 @@ public class FourWheelDrive extends OpMode {
             intake.setPower(1);
         } else if (secondController.dpad_down == ButtonState.PRESSED) {
             intake.setPower(-1);
-        } else if (secondController.left_bumper == ButtonState.PRESSED) {
+        } else if (secondController.dpad_left == ButtonState.PRESSED) {
+            intake.setPower(0);
+        } else if (secondController.dpad_right == ButtonState.PRESSED) {
             intake.setPower(0);
         }
 
@@ -69,7 +71,15 @@ public class FourWheelDrive extends OpMode {
             liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() - 0.05));
         }
 
-        if (secondController.right_bumper == ButtonState.HELD){
+        if (secondController.left_bumper == ButtonState.HELD){
+            liftStringServoOne.setPosition(1);
+            liftStringServoTwo.setPosition(0);
+        }
+        else if (secondController.left_trigger == 1.0){
+            liftStringServoOne.setPosition(0);
+            liftStringServoTwo.setPosition(1);
+        }
+        else if (secondController.right_bumper == ButtonState.HELD){
             lift.setPower(.2);
             liftStringServoOne.setPosition(1);
             liftStringServoTwo.setPosition(0);
