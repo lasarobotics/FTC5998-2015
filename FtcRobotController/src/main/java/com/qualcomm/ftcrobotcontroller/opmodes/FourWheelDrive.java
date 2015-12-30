@@ -16,7 +16,8 @@ public class FourWheelDrive extends OpMode {
     Servo liftStringServoOne, liftStringServoTwo;
     Controller firstController;
     Controller secondController;
-    Servo hanger, goal;
+    Servo goal;
+    DcMotor goalOne, goalTwo;
 
 
     public void init() {
@@ -27,18 +28,18 @@ public class FourWheelDrive extends OpMode {
         backLeft = hardwareMap.dcMotor.get("backLeft");
         backRight = hardwareMap.dcMotor.get("backRight");
         intake = hardwareMap.dcMotor.get("intake");
+        goalOne = hardwareMap.dcMotor.get("goalOne");
+        goalTwo = hardwareMap.dcMotor.get("goalTwo");
         lift = hardwareMap.dcMotor.get("lift");
         liftServo = hardwareMap.servo.get("liftServo");
         liftStringServoOne = hardwareMap.servo.get("liftStringServoOne");
         liftStringServoTwo = hardwareMap.servo.get("liftStringServoTwo");
-        hanger = hardwareMap.servo.get("hanger");
         goal = hardwareMap.servo.get("goal");
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
         liftServo.setPosition(0.5); // set the servo halfway in between 0 and 1, so there can be
         // 10 increments on either side
         goal.setPosition(0.5);
-        hanger.setPosition(.06);
         liftStringServoOne.setPosition(.53);
         liftStringServoTwo.setPosition(.53);
     }
@@ -49,9 +50,25 @@ public class FourWheelDrive extends OpMode {
         Tank.motor4(frontLeft, frontRight, backLeft, backRight, -firstController.left_stick_y,
                 firstController.right_stick_y);
 
-        if (firstController.x == ButtonState.PRESSED) {
+        if (firstController.right_bumper == ButtonState.PRESSED) {
+            goalOne.setPower(1);
+        } else if (firstController.right_trigger == ButtonState.PRESSED) {
+            goalOne.setPower(-1);
+        } else {
+            goalOne.setPower(0);
+        }
+
+        if (firstController.left_bumper == ButtonState.PRESSED) {
+            goalTwo.setPower(1);
+        } else if (firstController.left_trigger == ButtonState.PRESSED) {
+            goalTwo.setPower(-1);
+        } else {
+            goalTwo.setPower(0);
+        }
+
+        if (secondController.y == ButtonState.PRESSED) {
             goal.setPosition(MathUtil.coerce(0.0, 1.0, goal.getPosition() + 0.20));
-        } else if (firstController.b == ButtonState.PRESSED) {
+        } else if (secondController.a == ButtonState.PRESSED) {
             goal.setPosition(MathUtil.coerce(0.0, 1.0, goal.getPosition() - 0.20));
         }
 
@@ -95,13 +112,6 @@ public class FourWheelDrive extends OpMode {
             liftStringServoTwo.setPosition(.53);
         }
 
-        if (secondController.a == ButtonState.PRESSED){
-            hanger.setPosition(0.951);
-        }
-        else if (secondController.y == ButtonState.PRESSED){
-            hanger.setPosition(.06);
-        }
-
     }
 
     public void stop() { // make sure nothing moves after the end of the match
@@ -110,6 +120,8 @@ public class FourWheelDrive extends OpMode {
         frontRight.setPower(0);
         backLeft.setPower(0);
         backRight.setPower(0);
+        goalOne.setPower(0);
+        goalTwo.setPower(0);
         lift.setPower(0);
         liftStringServoOne.setPosition(.53);
         liftStringServoTwo.setPosition(.53);
