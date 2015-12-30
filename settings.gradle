@@ -1,3 +1,6 @@
 // FTC Apps
-include ':FtcRobotController', ':ftc-library' ,':opencv-java',':ftc-visionlib'
+include ':FtcRobotController', ':ftc-library' ,':opencv-java',':ftc-visionlib', ':ftc-cameratest'
 project(':ftc-library').projectDir = new File('ftcandroidlibrary/ftc-library')
+project(':opencv-java').projectDir = new File('FTCVision/opencv-java')
+project(':ftc-visionlib').projectDir = new File('FTCVision/ftc-visionlib')
+project(':ftc-cameratest').projectDir = new File('FTCVision/ftc-cameratest')
