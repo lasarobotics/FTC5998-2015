@@ -4,4 +4,5 @@
 
 [submodule "FTCVision"]
 	path = FTCVision
-	url = https://github.com/lasarobotics/FTCVision
+	url = https://github.com/lasarobotics/FTCVision.git
+	branch = dev
