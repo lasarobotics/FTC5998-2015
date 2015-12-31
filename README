@@ -1,6 +1,6 @@
 5998 Res-Q
 
-This project includes source from FTCLibrary and FTCVision, although
-only FTCLibrary is in use right now.
+This project depends on source from FTCLibrary and FTCVision.
 
-You can find those projects at <https://github.com/lasarobotics>.
+You can find those projects at <https://github.com/lasarobotics/FTCLibrary>
+and < <https://github.com/lasarobotics/FTCVision>, respectively.

@@ -31,6 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.lasarobotics.library.drive.Tank;
 import org.lasarobotics.vision.android.Cameras;
 import org.lasarobotics.vision.opmode.VisionOpMode;
 import org.opencv.core.Size;
@@ -42,10 +44,20 @@ import org.lasarobotics.vision.opmode.extensions.BeaconExtension;
  * Enables control of the robot via the gamepad
  */
 public class AutonomousVision extends VisionOpMode {
+    DcMotor frontLeft, frontRight, backLeft, backRight;
+    double leftSpeed, rightSpeed;
+    public static final double correctionFactor = 0.05;
 
     @Override
     public void init() {
         super.init();
+        frontLeft = hardwareMap.dcMotor.get("frontLeft");
+        frontRight = hardwareMap.dcMotor.get("frontRight");
+        backLeft = hardwareMap.dcMotor.get("backLeft");
+        backRight = hardwareMap.dcMotor.get("backRight");
+        leftSpeed = 0.5; // set initial motor speeds
+        rightSpeed = 0.5;
+
 
         //Set the camera used for detection
         this.setCamera(Cameras.PRIMARY);
@@ -66,14 +78,22 @@ public class AutonomousVision extends VisionOpMode {
     @Override
     public void loop() {
         super.loop();
-        if (beacon.getAnalysis().getCenter().x > 450) {
-
+        Tank.motor4(frontLeft, frontRight, backLeft, backRight, -leftSpeed, rightSpeed);
+        if (beacon.getAnalysis().getCenter().x > 450) { // *slowly* increment the compensation so that we don't mess everything up in the case of one bad frame analysis
+            leftSpeed += correctionFactor;
+            rightSpeed -= correctionFactor;
+        } else if (beacon.getAnalysis().getCenter().x < 450) {
+            leftSpeed -= correctionFactor;
+            rightSpeed += correctionFactor;
+        } else {
+            leftSpeed = 0.5;
+            rightSpeed = 0.5;
         }
         telemetry.addData("Beacon Color", beacon.getAnalysis().getColorString());
         telemetry.addData("Beacon Location (Center)", beacon.getAnalysis().getLocationString());
         telemetry.addData("Beacon Confidence", beacon.getAnalysis().getConfidenceString());
-        telemetry.addData("QR Error", qr.getErrorReason());
-        telemetry.addData("QR String", qr.getText());
+        //telemetry.addData("QR Error", qr.getErrorReason());
+        //telemetry.addData("QR String", qr.getText());
         telemetry.addData("Rotation Compensation", rotation.getRotationAngle());
         telemetry.addData("Frame Rate", fps.getFPSString() + " FPS");
         telemetry.addData("Frame Size", "Width: " + width + " Height: " + height);
