@@ -79,10 +79,10 @@ public class AutonomousVision extends VisionOpMode {
     public void loop() {
         super.loop();
         Tank.motor4(frontLeft, frontRight, backLeft, backRight, -leftSpeed, rightSpeed);
-        if (beacon.getAnalysis().getCenter().x > 450) { // *slowly* increment the compensation so that we don't mess everything up in the case of one bad frame analysis
+        if (beacon.getAnalysis().getCenter().x > width/2) { // *slowly* increment the compensation so that we don't mess everything up in the case of one bad frame analysis
             leftSpeed += correctionFactor;
             rightSpeed -= correctionFactor;
-        } else if (beacon.getAnalysis().getCenter().x < 450) {
+        } else if (beacon.getAnalysis().getCenter().x < width/2) {
             leftSpeed -= correctionFactor;
             rightSpeed += correctionFactor;
         } else {
