@@ -92,7 +92,7 @@ public class FourWheelDrive extends OpMode {
             liftStringServoOne.setPosition(1);
             liftStringServoTwo.setPosition(0);
         }
-        else if (secondController.left_trigger == 1.0){
+        else if (secondController.left_trigger == ButtonState.HELD){
             liftStringServoOne.setPosition(0);
             liftStringServoTwo.setPosition(1);
         }
@@ -101,7 +101,7 @@ public class FourWheelDrive extends OpMode {
             liftStringServoOne.setPosition(1);
             liftStringServoTwo.setPosition(0);
         }
-        else if (secondController.right_trigger == 1.0){
+        else if (secondController.right_trigger == ButtonState.HELD){
             lift.setPower(-.2);
             liftStringServoOne.setPosition(0);
             liftStringServoTwo.setPosition(1);
