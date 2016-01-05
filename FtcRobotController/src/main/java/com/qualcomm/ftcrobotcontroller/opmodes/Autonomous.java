@@ -43,7 +43,7 @@ import org.lasarobotics.vision.opmode.extensions.BeaconExtension;
  * <p/>
  * Enables control of the robot via the gamepad
  */
-public class AutonomousVision extends VisionOpMode {
+public class Autonomous extends VisionOpMode {
     DcMotor frontLeft, frontRight, backLeft, backRight;
     double leftSpeed, rightSpeed;
     public static final double correctionFactor = 0.05;
@@ -67,7 +67,7 @@ public class AutonomousVision extends VisionOpMode {
 
         //Enable extensions. Use what you need.
         enableExtension(Extensions.BEACON);     //Beacon detection
-        enableExtension(Extensions.QR);         //QR Code detection
+        //enableExtension(Extensions.QR);         //QR Code detection
         enableExtension(Extensions.ROTATION);   //Automatic screen rotation correction
 
         //You can do this for certain phones which switch red and blue
@@ -75,20 +75,52 @@ public class AutonomousVision extends VisionOpMode {
         //rotation.setUnbiasedOrientation(ScreenOrientation.LANDSCAPE_WEST);
     }
 
+    public enum DriveState
+    {
+        MOVE_FORWARD,
+        MOVE_LEFT,
+        MOVE_TOTARGET,
+        VISION_LOCATEBUTTON,
+        PRESS_BUTTON
+    }
+
+    DriveState currentState = DriveState.VISION_LOCATEBUTTON;
+
     @Override
     public void loop() {
         super.loop();
-        Tank.motor4(frontLeft, frontRight, backLeft, backRight, -leftSpeed, rightSpeed);
-        if (beacon.getAnalysis().getCenter().x > width/2) { // *slowly* increment the compensation so that we don't mess everything up in the case of one bad frame analysis
-            leftSpeed += correctionFactor;
-            rightSpeed -= correctionFactor;
-        } else if (beacon.getAnalysis().getCenter().x < width/2) {
-            leftSpeed -= correctionFactor;
-            rightSpeed += correctionFactor;
-        } else {
-            leftSpeed = 0.5;
-            rightSpeed = 0.5;
+
+        switch(currentState)
+        {
+            case MOVE_FORWARD:
+
+                break;
+            case MOVE_LEFT:
+
+                break;
+            case MOVE_TOTARGET:
+
+                break;
+            case VISION_LOCATEBUTTON:
+                Tank.motor4(frontLeft, frontRight, backLeft, backRight, -leftSpeed, rightSpeed);
+                if (beacon.getAnalysis().getCenter().x > width/2) { // *slowly* increment the compensation so that we don't mess everything up in the case of one bad frame analysis
+                    leftSpeed += correctionFactor;
+                    rightSpeed -= correctionFactor;
+                } else if (beacon.getAnalysis().getCenter().x < width/2) {
+                    leftSpeed -= correctionFactor;
+                    rightSpeed += correctionFactor;
+                } else {
+                    leftSpeed = 0.5;
+                    rightSpeed = 0.5;
+                }
+                break;
+            case PRESS_BUTTON:
+
+                break;
+            default:
+                return;
         }
+
         telemetry.addData("Beacon Color", beacon.getAnalysis().getColorString());
         telemetry.addData("Beacon Location (Center)", beacon.getAnalysis().getLocationString());
         telemetry.addData("Beacon Confidence", beacon.getAnalysis().getConfidenceString());

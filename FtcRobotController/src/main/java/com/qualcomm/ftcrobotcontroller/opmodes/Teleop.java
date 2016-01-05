@@ -3,25 +3,31 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 import com.lasarobotics.library.controller.ButtonState;
 import com.lasarobotics.library.controller.Controller;
 import com.lasarobotics.library.drive.Tank;
-import com.lasarobotics.library.util.MathUtil;
+import com.lasarobotics.library.util.Timers;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-public class FourWheelDrive extends OpMode {
+public class Teleop extends OpMode {
 
     DcMotor frontLeft, frontRight, backLeft, backRight;
     DcMotor intake, lift;
     Servo liftServo;
-    Servo liftStringServoOne, liftStringServoTwo;
+    Servo slide, dump;
     Controller firstController;
     Controller secondController;
     Servo goal;
     DcMotor goalOne, goalTwo;
-
+    private enum LiftStatus {
+        LEFT,
+        RIGHT,
+        CENTER
+    }
+    LiftStatus status;
+    Timers robotTimer;
 
     public void init() {
-        gamepad1.setJoystickDeadzone(.1F); // make sure we don't get fake values
+        gamepad1.setJoystickDeadzone(.1F);
         gamepad2.setJoystickDeadzone(.1F);
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
         frontRight = hardwareMap.dcMotor.get("frontRight");
@@ -32,16 +38,18 @@ public class FourWheelDrive extends OpMode {
         goalTwo = hardwareMap.dcMotor.get("goalTwo");
         lift = hardwareMap.dcMotor.get("lift");
         liftServo = hardwareMap.servo.get("liftServo");
-        liftStringServoOne = hardwareMap.servo.get("liftStringServoOne");
-        liftStringServoTwo = hardwareMap.servo.get("liftStringServoTwo");
+        slide = hardwareMap.servo.get("slide");
+        dump = hardwareMap.servo.get("dump");
         goal = hardwareMap.servo.get("goal");
+        robotTimer = new Timers();
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
         liftServo.setPosition(0.5); // set the servo halfway in between 0 and 1, so there can be
         // 10 increments on either side
         goal.setPosition(0.5);
-        liftStringServoOne.setPosition(.53);
-        liftStringServoTwo.setPosition(.53);
+        slide.setPosition(.53);
+        dump.setPosition(.53);
+        status = LiftStatus.CENTER;
     }
 
     public void loop() {
@@ -66,12 +74,6 @@ public class FourWheelDrive extends OpMode {
             goalTwo.setPower(0);
         }
 
-        if (secondController.y == ButtonState.PRESSED) {
-            goal.setPosition(MathUtil.coerce(0.0, 1.0, goal.getPosition() + 0.20));
-        } else if (secondController.a == ButtonState.PRESSED) {
-            goal.setPosition(MathUtil.coerce(0.0, 1.0, goal.getPosition() - 0.20));
-        }
-
         if (secondController.dpad_up == ButtonState.PRESSED) {
             intake.setPower(1);
         } else if (secondController.dpad_down == ButtonState.PRESSED) {
@@ -82,35 +84,36 @@ public class FourWheelDrive extends OpMode {
             intake.setPower(0);
         }
 
-        if (secondController.x == ButtonState.PRESSED) {
-            liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() + 0.05));
-        } else if (secondController.b == ButtonState.PRESSED) {
-            liftServo.setPosition(MathUtil.coerce(0.0, 1.0, liftServo.getPosition() - 0.05));
-        }
-
         if (secondController.left_bumper == ButtonState.HELD){
-            liftStringServoOne.setPosition(1);
-            liftStringServoTwo.setPosition(0);
-        }
-        else if (secondController.left_trigger == ButtonState.HELD){
-            liftStringServoOne.setPosition(0);
-            liftStringServoTwo.setPosition(1);
-        }
-        else if (secondController.right_bumper == ButtonState.HELD){
-            lift.setPower(.2);
-            liftStringServoOne.setPosition(1);
-            liftStringServoTwo.setPosition(0);
+            lift.setPower(.5);
         }
         else if (secondController.right_trigger == ButtonState.HELD){
-            lift.setPower(-.2);
-            liftStringServoOne.setPosition(0);
-            liftStringServoTwo.setPosition(1);
+            lift.setPower(-.3);
         }
-        else{
+        else {
             lift.setPower(0);
-            liftStringServoOne.setPosition(.53);
-            liftStringServoTwo.setPosition(.53);
         }
+
+        if (secondController.x == ButtonState.HELD) {
+            status = LiftStatus.LEFT;
+            robotTimer.startClock("dumpTimer");
+            slide.setPosition(1);
+        } else if (secondController.b == ButtonState.HELD) {
+            status = LiftStatus.RIGHT;
+            robotTimer.startClock("dumpTimer");
+            slide.setPosition(0);
+        } else if (secondController.a == ButtonState.HELD) {
+            status = LiftStatus.CENTER;
+            slide.setPosition(0.5);
+            dump.setPosition(0.5);
+        }
+
+        if ((status == LiftStatus.LEFT) && (robotTimer.getClockValue("dumpTimer") >= 100)) {
+            dump.setPosition(0);
+        } else if ((status == LiftStatus.RIGHT) && (robotTimer.getClockValue("dumpTimer") >= 100)) {
+            dump.setPosition(1);
+        }
+
 
     }
 
@@ -123,7 +126,7 @@ public class FourWheelDrive extends OpMode {
         goalOne.setPower(0);
         goalTwo.setPower(0);
         lift.setPower(0);
-        liftStringServoOne.setPosition(.53);
-        liftStringServoTwo.setPosition(.53);
+        slide.setPosition(.53);
+        dump.setPosition(.53);
     }
 }

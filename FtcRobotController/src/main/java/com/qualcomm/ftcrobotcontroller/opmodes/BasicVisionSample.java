@@ -38,7 +38,7 @@ import org.lasarobotics.vision.ftc.resq.Beacon;
 import org.lasarobotics.vision.image.Drawing;
 import org.lasarobotics.vision.image.Transform;
 import org.lasarobotics.vision.opmode.ManualVisionOpMode;
-import org.lasarobotics.vision.opmode.VisionExtensions;
+import org.lasarobotics.vision.opmode.extensions.VisionExtension;
 import org.lasarobotics.vision.opmode.VisionOpMode;
 import org.lasarobotics.vision.util.color.ColorGRAY;
 import org.lasarobotics.vision.util.color.ColorHSV;
@@ -63,15 +63,15 @@ public class BasicVisionSample extends VisionOpMode {
         this.setCamera(Cameras.PRIMARY);
         this.setFrameSize(new Size(900, 900));
 
-        enableExtension(VisionExtensions.BEACON_COLOR);
+        enableExtension(Extensions.BEACON);
     }
 
     @Override
     public void loop() {
         super.loop();
 
-        telemetry.addData("Beacon Color", beaconColor.toString());
-        telemetry.addData("Analysis Confidence", beaconColor.getConfidenceString());
+        telemetry.addData("Beacon Color", beacon.toString());
+        telemetry.addData("Analysis Confidence", beacon.getAnalysis().getConfidenceString());
         telemetry.addData("Frame Rate", fps.getFPSString() + " FPS");
         telemetry.addData("Frame Size", "Width: " + width + " Height: " + height);
     }
