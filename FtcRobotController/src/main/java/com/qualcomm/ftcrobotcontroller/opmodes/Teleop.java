@@ -12,11 +12,9 @@ public class Teleop extends OpMode {
 
     DcMotor frontLeft, frontRight, backLeft, backRight;
     DcMotor intake, lift;
-    Servo liftServo;
     Servo slide, dump;
     Controller firstController;
     Controller secondController;
-    Servo goal;
     DcMotor goalOne, goalTwo;
     private enum LiftStatus {
         LEFT,
@@ -37,16 +35,11 @@ public class Teleop extends OpMode {
         goalOne = hardwareMap.dcMotor.get("goalOne");
         goalTwo = hardwareMap.dcMotor.get("goalTwo");
         lift = hardwareMap.dcMotor.get("lift");
-        liftServo = hardwareMap.servo.get("liftServo");
         slide = hardwareMap.servo.get("slide");
         dump = hardwareMap.servo.get("dump");
-        goal = hardwareMap.servo.get("goal");
         robotTimer = new Timers();
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
-        liftServo.setPosition(0.5); // set the servo halfway in between 0 and 1, so there can be
-        // 10 increments on either side
-        goal.setPosition(0.5);
         slide.setPosition(.53);
         dump.setPosition(.53);
         status = LiftStatus.CENTER;
