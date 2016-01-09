@@ -12,7 +12,7 @@ public class Teleop extends OpMode {
 
     DcMotor frontLeft, frontRight, backLeft, backRight;
     DcMotor intake, lift;
-    Servo slide, dump;
+    //Servo slide, dump;
     Controller firstController;
     Controller secondController;
     DcMotor goalOne, goalTwo;
@@ -35,13 +35,13 @@ public class Teleop extends OpMode {
         goalOne = hardwareMap.dcMotor.get("goalOne");
         goalTwo = hardwareMap.dcMotor.get("goalTwo");
         lift = hardwareMap.dcMotor.get("lift");
-        slide = hardwareMap.servo.get("slide");
-        dump = hardwareMap.servo.get("dump");
+        //slide = hardwareMap.servo.get("slide");
+        //dump = hardwareMap.servo.get("dump");
         robotTimer = new Timers();
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
-        slide.setPosition(.53);
-        dump.setPosition(.53);
+        //slide.setPosition(.53);
+        //dump.setPosition(.53);
         status = LiftStatus.CENTER;
     }
 
@@ -52,7 +52,9 @@ public class Teleop extends OpMode {
                 firstController.right_stick_y);
 
         if (firstController.right_bumper == ButtonState.PRESSED) {
+            goalOne.setDirection(DcMotor.Direction.REVERSE);
             goalOne.setPower(1);
+            goalOne.setDirection(DcMotor.Direction.FORWARD);
         } else if (firstController.right_trigger == ButtonState.PRESSED) {
             goalOne.setPower(-1);
         } else {
@@ -60,7 +62,9 @@ public class Teleop extends OpMode {
         }
 
         if (firstController.left_bumper == ButtonState.PRESSED) {
+            goalOne.setDirection(DcMotor.Direction.REVERSE);
             goalTwo.setPower(1);
+                goalOne.setDirection(DcMotor.Direction.FORWARD);
         } else if (firstController.left_trigger == ButtonState.PRESSED) {
             goalTwo.setPower(-1);
         } else {
@@ -78,16 +82,16 @@ public class Teleop extends OpMode {
         }
 
         if (secondController.left_bumper == ButtonState.HELD){
-            lift.setPower(.5);
+            lift.setPower(.3);
         }
-        else if (secondController.right_trigger == ButtonState.HELD){
+        else if (secondController.right_bumper == ButtonState.HELD){
             lift.setPower(-.3);
         }
         else {
             lift.setPower(0);
         }
 
-        if (secondController.x == ButtonState.HELD) {
+        /*if (secondController.x == ButtonState.HELD) {
             status = LiftStatus.LEFT;
             robotTimer.startClock("dumpTimer");
             slide.setPosition(1);
@@ -105,7 +109,7 @@ public class Teleop extends OpMode {
             dump.setPosition(0);
         } else if ((status == LiftStatus.RIGHT) && (robotTimer.getClockValue("dumpTimer") >= 100)) {
             dump.setPosition(1);
-        }
+        }*/
 
 
     }
@@ -119,7 +123,7 @@ public class Teleop extends OpMode {
         goalOne.setPower(0);
         goalTwo.setPower(0);
         lift.setPower(0);
-        slide.setPosition(.53);
-        dump.setPosition(.53);
+        //slide.setPosition(.53);
+        //dump.setPosition(.53);
     }
 }
