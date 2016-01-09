@@ -55,13 +55,8 @@ public class FtcOpModeRegister implements OpModeRegister {
      * If two or more op modes are registered with the same name, the app will display an error.
      */
 
-    manager.register("NullOp", NullOp.class);
-    manager.register("Teleop", Teleop.class);
-    manager.register("ManualVisionSample", ManualVisionSample.class);
-    manager.register("BasicVisionSample", BasicVisionSample.class);
-    manager.register("Test", MonkeyCWriteTest.class);
-    manager.register("Auto",Auto.class);
-    manager.register("Vision", BasicVisionSample.class);
-
+    manager.register("Do Nothing", NullOp.class);
+    manager.register("Run Tele-Op", Teleop.class);
+    manager.register("Run Autonomous",Autonomous.class);
   }
 }
