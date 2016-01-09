@@ -52,20 +52,16 @@ public class Teleop extends OpMode {
                 firstController.right_stick_y);
 
         if (firstController.right_bumper == ButtonState.PRESSED) {
-            goalOne.setDirection(DcMotor.Direction.REVERSE);
             goalOne.setPower(1);
-            goalOne.setDirection(DcMotor.Direction.FORWARD);
-        } else if (firstController.right_trigger == ButtonState.PRESSED) {
+        } else if (firstController.right_trigger > 0.2) {
             goalOne.setPower(-1);
         } else {
             goalOne.setPower(0);
         }
 
         if (firstController.left_bumper == ButtonState.PRESSED) {
-            goalOne.setDirection(DcMotor.Direction.REVERSE);
             goalTwo.setPower(1);
-                goalOne.setDirection(DcMotor.Direction.FORWARD);
-        } else if (firstController.left_trigger == ButtonState.PRESSED) {
+        } else if (firstController.left_trigger > 0.2) {
             goalTwo.setPower(-1);
         } else {
             goalTwo.setPower(0);
