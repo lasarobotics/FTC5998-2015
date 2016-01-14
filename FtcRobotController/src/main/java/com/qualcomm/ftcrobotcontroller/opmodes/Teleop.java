@@ -3,19 +3,23 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 import com.lasarobotics.library.controller.ButtonState;
 import com.lasarobotics.library.controller.Controller;
 import com.lasarobotics.library.drive.Tank;
+import com.lasarobotics.library.util.MathUtil;
 import com.lasarobotics.library.util.Timers;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.opencv.photo.Photo;
+
 public class Teleop extends OpMode {
 
     DcMotor frontLeft, frontRight, backLeft, backRight;
     DcMotor intake, lift;
-    Servo slide, dump;
+    Servo slide, dump,carabiner,climber;
     Controller firstController;
     Controller secondController;
     DcMotor goalOne, goalTwo;
+    double modfier = 0.25;
     private enum LiftStatus {
         LEFT,
         RIGHT,
@@ -37,20 +41,34 @@ public class Teleop extends OpMode {
         lift = hardwareMap.dcMotor.get("lift");
         slide = hardwareMap.servo.get("slide");
         dump = hardwareMap.servo.get("dump");
+        carabiner = hardwareMap.servo.get("carabiner");
+        climber = hardwareMap.servo.get("climber");
         robotTimer = new Timers();
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
-        slide.setPosition(.53);
-        dump.setPosition(.53);
+        slide.setPosition(.5);
+        dump.setPosition(.5);
+        climber.setPosition(1);
+        carabiner.setPosition(.85);
         status = LiftStatus.CENTER;
+        lift.setDirection(DcMotor.Direction.REVERSE);
     }
 
     public void loop() {
         firstController.update(gamepad1);
         secondController.update(gamepad2);
-        Tank.motor4(frontLeft, frontRight, backLeft, backRight, -firstController.left_stick_y,
-                firstController.right_stick_y);
+        //Drive
+        if (firstController.x == ButtonState.PRESSED){
+            if (modfier == 1)
+                modfier = .25;
+            else
+                modfier = 1;
+        }
+        telemetry.addData("mod",modfier);
+        Tank.motor4(frontLeft, frontRight, backLeft, backRight, -firstController.left_stick_y*modfier,
+                firstController.right_stick_y*modfier);
 
+        //Hanging
         if (firstController.right_bumper == ButtonState.PRESSED) {
             goalOne.setPower(1);
         } else if (firstController.right_trigger > 0.2) {
@@ -67,47 +85,59 @@ public class Teleop extends OpMode {
             goalTwo.setPower(0);
         }
 
-        if (secondController.dpad_up == ButtonState.PRESSED) {
+        if (firstController.a == ButtonState.HELD){
+            carabiner.setPosition(MathUtil.coerce(0, 1, carabiner.getPosition() + .005));
+        }
+        else if (firstController.y == ButtonState.HELD){
+            carabiner.setPosition(MathUtil.coerce(0, 1, carabiner.getPosition() - .005));
+        }
+
+        //Intake
+        if (secondController.y == ButtonState.PRESSED) {
             intake.setPower(1);
-        } else if (secondController.dpad_down == ButtonState.PRESSED) {
+        } else if (secondController.a == ButtonState.PRESSED) {
             intake.setPower(-1);
-        } else if (secondController.dpad_left == ButtonState.PRESSED) {
-            intake.setPower(0);
-        } else if (secondController.dpad_right == ButtonState.PRESSED) {
+        } else if (secondController.b == ButtonState.PRESSED) {
             intake.setPower(0);
         }
 
-        if (secondController.left_bumper == ButtonState.HELD){
+        //Lift
+        if (secondController.dpad_up == ButtonState.HELD){
             lift.setPower(.3);
         }
-        else if (secondController.right_bumper == ButtonState.HELD){
+        else if (secondController.dpad_down == ButtonState.HELD){
             lift.setPower(-.3);
         }
         else {
             lift.setPower(0);
         }
 
-        if (secondController.x == ButtonState.HELD) {
-            status = LiftStatus.LEFT;
-            robotTimer.startClock("dumpTimer");
-            slide.setPosition(1);
-        } else if (secondController.b == ButtonState.HELD) {
-            status = LiftStatus.RIGHT;
-            robotTimer.startClock("dumpTimer");
-            slide.setPosition(0);
-        } else if (secondController.a == ButtonState.HELD) {
-            status = LiftStatus.CENTER;
-            slide.setPosition(0.5);
-            dump.setPosition(0.5);
-
+        if (secondController.right_stick_x > .5) {
+            slide.setPosition(MathUtil.coerce(0, 1, slide.getPosition() + .02));
+        }
+        else if (secondController.right_stick_x < -.5){
+            slide.setPosition(MathUtil.coerce(0, 1, slide.getPosition() - .02));
+        }
+        else if (secondController.right_stick_y > .5){
+            slide.setPosition(.5);
         }
 
-        if ((status == LiftStatus.LEFT) && (robotTimer.getClockValue("dumpTimer") >= 100)) {
-            dump.setPosition(0);
-        } else if ((status == LiftStatus.RIGHT) && (robotTimer.getClockValue("dumpTimer") >= 100)) {
-            dump.setPosition(1);
+        if (secondController.left_stick_x > .5) {
+            dump.setPosition(MathUtil.coerce(0, 1, dump.getPosition() + .005));
         }
-
+        else if (secondController.left_stick_x < -.5){
+            dump.setPosition(MathUtil.coerce(0, 1, dump.getPosition() - .005));
+        }
+        else if (secondController.left_stick_y > .5){
+            dump.setPosition(.5);
+        }
+        //Climbers
+        if (secondController.start == ButtonState.PRESSED){
+            climber.setPosition(0);
+        }
+        else if (secondController.back == ButtonState.PRESSED){
+            climber.setPosition(1);
+        }
 
     }
 
