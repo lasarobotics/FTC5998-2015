@@ -131,7 +131,7 @@ public class Teleop extends OpMode {
         else if (secondController.left_stick_y > .5){
             dump.setPosition(.5);
         }
-        //Climbers
+        //Climbersq
         if (secondController.start == ButtonState.PRESSED){
             climber.setPosition(0);
         }

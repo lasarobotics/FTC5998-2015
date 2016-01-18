@@ -43,7 +43,7 @@ import org.lasarobotics.vision.opmode.extensions.BeaconExtension;
  * <p/>
  * Enables control of the robot via the gamepad
  */
-public class Autonomous extends VisionOpMode {
+public class VisionTest extends VisionOpMode {
     DcMotor frontLeft, frontRight, backLeft, backRight;
     double leftSpeed, rightSpeed;
     public static final double correctionFactor = 0.05;
