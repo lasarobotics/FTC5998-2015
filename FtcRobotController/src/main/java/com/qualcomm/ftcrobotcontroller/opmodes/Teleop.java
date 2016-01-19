@@ -8,8 +8,7 @@ import com.lasarobotics.library.util.Timers;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
-
-import org.opencv.photo.Photo;
+import java.util.concurrent.TimeUnit;
 
 public class Teleop extends OpMode {
 
@@ -19,14 +18,16 @@ public class Teleop extends OpMode {
     Controller firstController;
     Controller secondController;
     DcMotor goalOne, goalTwo;
-    double modfier = 0.25;
-    private enum LiftStatus {
-        LEFT,
-        RIGHT,
-        CENTER
+    private enum DriftStatus {
+        STOPPED,
+        MOVING,
+        DRIFTING
     }
-    LiftStatus status;
-    Timers robotTimer;
+    DriftStatus drift;
+    Timers mainTimer;
+    public static final double controllerThreshold = 0.2;
+    double lastLeftSpeed, lastRightSpeed;
+
 
     public void init() {
         gamepad1.setJoystickDeadzone(.1F);
@@ -43,35 +44,55 @@ public class Teleop extends OpMode {
         dump = hardwareMap.servo.get("dump");
         carabiner = hardwareMap.servo.get("carabiner");
         climber = hardwareMap.servo.get("climber");
-        robotTimer = new Timers();
+        mainTimer = new Timers();
         firstController = new Controller(gamepad1);
         secondController = new Controller(gamepad2);
         slide.setPosition(.5);
         dump.setPosition(.5);
         climber.setPosition(1);
         carabiner.setPosition(.85);
-        status = LiftStatus.CENTER;
+        drift = DriftStatus.STOPPED;
         lift.setDirection(DcMotor.Direction.REVERSE);
+        mainTimer.startClock("matchTimer");
     }
 
     public void loop() {
         firstController.update(gamepad1);
         secondController.update(gamepad2);
-        //Drive
-        if (firstController.x == ButtonState.PRESSED){
-            if (modfier == 1)
-                modfier = .25;
-            else
-                modfier = 1;
+        if ((firstController.left_stick_y > controllerThreshold) || (firstController.right_stick_y > controllerThreshold)) {
+            drift = DriftStatus.MOVING;
+        } else if (((firstController.left_stick_y <= controllerThreshold) && (firstController.right_stick_y <= controllerThreshold)) && (drift == DriftStatus.MOVING)) {
+            drift = DriftStatus.DRIFTING;
+            mainTimer.startClock("driftTimer");
+        } else if ((drift == DriftStatus.DRIFTING) && (mainTimer.getClockValue("driftTimer", TimeUnit.SECONDS) > 1)) {
+            drift = DriftStatus.STOPPED;
+            mainTimer.resetClock("driftTimer");
         }
-        telemetry.addData("mod",modfier);
-        Tank.motor4(frontLeft, frontRight, backLeft, backRight, -firstController.left_stick_y*modfier,
-                firstController.right_stick_y*modfier);
+
+        if (drift == DriftStatus.MOVING) {
+            Tank.motor4(frontLeft, frontRight, backLeft, backRight, -firstController.left_stick_y,
+                    firstController.right_stick_y);
+            lastLeftSpeed = firstController.left_stick_y;
+            lastRightSpeed = firstController.right_stick_y;
+
+        } else if (drift == DriftStatus.DRIFTING) {
+            Tank.motor4(frontLeft, frontRight, backLeft, backRight, -reduceSpeedLinear(lastLeftSpeed),
+                    reduceSpeedLinear(lastRightSpeed));
+            lastLeftSpeed = reduceSpeedLinear(lastLeftSpeed);
+            lastRightSpeed = reduceSpeedLinear(lastRightSpeed);
+
+        } else if (drift == DriftStatus.STOPPED) {
+            frontLeft.setPower(0);
+            frontRight.setPower(0);
+            backLeft.setPower(0);
+            backRight.setPower(0);
+        }
+
 
         //Hanging
         if (firstController.right_bumper == ButtonState.PRESSED) {
             goalOne.setPower(1);
-        } else if (firstController.right_trigger > 0.2) {
+        } else if (firstController.right_trigger > controllerThreshold) {
             goalOne.setPower(-1);
         } else {
             goalOne.setPower(0);
@@ -79,7 +100,7 @@ public class Teleop extends OpMode {
 
         if (firstController.left_bumper == ButtonState.PRESSED) {
             goalTwo.setPower(1);
-        } else if (firstController.left_trigger > 0.2) {
+        } else if (firstController.left_trigger > controllerThreshold) {
             goalTwo.setPower(-1);
         } else {
             goalTwo.setPower(0);
@@ -112,23 +133,23 @@ public class Teleop extends OpMode {
             lift.setPower(0);
         }
 
-        if (secondController.right_stick_x > .5) {
+        if (secondController.right_stick_x > controllerThreshold) {
             slide.setPosition(MathUtil.coerce(0, 1, slide.getPosition() + .02));
         }
-        else if (secondController.right_stick_x < -.5){
+        else if (secondController.right_stick_x < -controllerThreshold){
             slide.setPosition(MathUtil.coerce(0, 1, slide.getPosition() - .02));
         }
-        else if (secondController.right_stick_y > .5){
+        else if (secondController.right_stick_y > controllerThreshold){
             slide.setPosition(.5);
         }
 
-        if (secondController.left_stick_x > .5) {
+        if (secondController.left_stick_x > controllerThreshold) {
             dump.setPosition(MathUtil.coerce(0, 1, dump.getPosition() + .005));
         }
-        else if (secondController.left_stick_x < -.5){
+        else if (secondController.left_stick_x < -controllerThreshold){
             dump.setPosition(MathUtil.coerce(0, 1, dump.getPosition() - .005));
         }
-        else if (secondController.left_stick_y > .5){
+        else if (secondController.left_stick_y > controllerThreshold){
             dump.setPosition(.5);
         }
         //Climbers
@@ -139,9 +160,24 @@ public class Teleop extends OpMode {
             climber.setPosition(1);
         }
 
+        if (mainTimer.getClockValue("matchTimer", TimeUnit.SECONDS) >= 119.5) // auto stop at end
+        {
+            stop();
+        }
     }
 
-    public void stop() { // make sure nothing moves after the end of the match
+    public double reduceSpeedLinear(double speed) {
+        if (speed > 0) {
+            return (speed - 0.1);
+        } else if (speed < 0) {
+            return (speed + 0.1);
+        } else {
+            return speed;
+        }
+    }
+
+    public void stop() {
+        super.stop();
         intake.setPower(0);
         frontLeft.setPower(0);
         frontRight.setPower(0);
