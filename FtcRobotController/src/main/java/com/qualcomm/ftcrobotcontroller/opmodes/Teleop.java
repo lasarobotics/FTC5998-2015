@@ -69,7 +69,7 @@ public class Teleop extends OpMode {
                 firstController.right_stick_y*modfier);
 
         //Hanging
-        if (firstController.right_bumper == ButtonState.PRESSED) {
+        if (firstController.right_bumper == ButtonState.HELD) {
             goalOne.setPower(1);
         } else if (firstController.right_trigger > 0.2) {
             goalOne.setPower(-1);
@@ -77,7 +77,7 @@ public class Teleop extends OpMode {
             goalOne.setPower(0);
         }
 
-        if (firstController.left_bumper == ButtonState.PRESSED) {
+        if (firstController.left_bumper == ButtonState.HELD) {
             goalTwo.setPower(1);
         } else if (firstController.left_trigger > 0.2) {
             goalTwo.setPower(-1);
@@ -103,20 +103,20 @@ public class Teleop extends OpMode {
 
         //Lift
         if (secondController.dpad_up == ButtonState.HELD){
-            lift.setPower(.3);
+            lift.setPower(.6);
         }
         else if (secondController.dpad_down == ButtonState.HELD){
-            lift.setPower(-.3);
+            lift.setPower(-.6);
         }
         else {
             lift.setPower(0);
         }
 
         if (secondController.right_stick_x > .5) {
-            slide.setPosition(MathUtil.coerce(0, 1, slide.getPosition() + .02));
+            slide.setPosition(MathUtil.coerce(0, 1, slide.getPosition() + .005));
         }
         else if (secondController.right_stick_x < -.5){
-            slide.setPosition(MathUtil.coerce(0, 1, slide.getPosition() - .02));
+            slide.setPosition(MathUtil.coerce(0, 1, slide.getPosition() - .005));
         }
         else if (secondController.right_stick_y > .5){
             slide.setPosition(.5);
