@@ -81,15 +81,9 @@ public class Auto extends LinearOpMode {
     }
 
     private void runForEncoderCounts(int counts, double power) throws InterruptedException {
-        frontLeft.setMode(DcMotorController.RunMode.RESET_ENCODERS);
-        frontRight.setMode(DcMotorController.RunMode.RESET_ENCODERS);
-        backLeft.setMode(DcMotorController.RunMode.RESET_ENCODERS);
         backRight.setMode(DcMotorController.RunMode.RESET_ENCODERS);
         block(100);
         waitOneFullHardwareCycle();
-        frontLeft.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
-        frontRight.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
-        backLeft.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
         backRight.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
 
         frontLeft.setPower(power);
@@ -97,7 +91,7 @@ public class Auto extends LinearOpMode {
         backLeft.setPower(power);
         backRight.setPower(power);
 
-        while ( encoderAverage() < counts){
+        while ( backRight.getCurrentPosition() < counts){
             waitOneFullHardwareCycle();
             Log.d("encoder", backLeft.getCurrentPosition() + "bl");
             Log.d("encoder",backRight.getCurrentPosition() + "br");
