@@ -18,7 +18,7 @@ public class Auto extends LinearOpMode {
     private DcMotor frontLeft, frontRight, backLeft, backRight,intake;
     private GyroSensor gyro;
     private static final int TOLERANCE_DEGREES = 5;
-    private Servo climber;
+    private Servo slide, dump,carabiner,climber;
     private AHRS navx_device;
     private final int NAVX_DIM_I2C_PORT = 1;
     private final byte NAVX_DEVICE_UPDATE_RATE_HZ = 50;
@@ -30,6 +30,9 @@ public class Auto extends LinearOpMode {
         backLeft = hardwareMap.dcMotor.get("backLeft");
         backRight = hardwareMap.dcMotor.get("backRight");
         intake = hardwareMap.dcMotor.get("intake");
+        slide = hardwareMap.servo.get("slide");
+        dump = hardwareMap.servo.get("dump");
+        carabiner = hardwareMap.servo.get("carabiner");
         climber = hardwareMap.servo.get("climber");
 
         frontLeft.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
@@ -39,8 +42,11 @@ public class Auto extends LinearOpMode {
 
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
-        climber.setPosition(1);
 
+        slide.setPosition(.5);
+        dump.setPosition(.5);
+        climber.setPosition(1);
+        carabiner.setPosition(.85);
         navx_device = AHRS.getInstance(hardwareMap.deviceInterfaceModule.get("dim"),
                 NAVX_DIM_I2C_PORT,
                 AHRS.DeviceDataType.kProcessedData,
@@ -54,21 +60,30 @@ public class Auto extends LinearOpMode {
 
         //Run
         intake.setPower(1);
+        turnToDegNavX(45, -.5);
+        block(500);
         runForEncoderCounts(5000, .5);
+        block(500);
+        turnToDegNavX(320, .5);
         block(1000);
-        turnToDegNavX(290, .5);
-        block(1000);
+        runForEncoderCounts(2500, .5);
+        block(500);
+        turnToDegNavX(270, .5);
+        block(500);
+        runForEncoderCounts(700, -.5);
 
         //Dump
         intake.setPower(0);
         climber.setPosition(0);
+        waitOneFullHardwareCycle();
 
         //Shutdown
-        climber.setPosition(1);
+        climber.setPosition(0);
         frontLeft.setPower(0);
         frontRight.setPower(0);
         backLeft.setPower(0);
         backRight.setPower(0);
+        waitOneFullHardwareCycle();
         telemetry.addData("status", "done");
     }
     private void block(int ms) throws InterruptedException {
@@ -90,8 +105,8 @@ public class Auto extends LinearOpMode {
         frontRight.setPower(power);
         backLeft.setPower(power);
         backRight.setPower(power);
-
-        while ( backRight.getCurrentPosition() < counts){
+        waitOneFullHardwareCycle();
+        while ( Math.abs(backRight.getCurrentPosition()) < counts){
             waitOneFullHardwareCycle();
             Log.d("encoder", backLeft.getCurrentPosition() + "bl");
             Log.d("encoder",backRight.getCurrentPosition() + "br");
@@ -110,7 +125,7 @@ public class Auto extends LinearOpMode {
         frontRight.setPower(-power);
         backLeft.setPower(power);
         backRight.setPower(-power);
-
+        waitOneFullHardwareCycle();
         while (!MathUtil.inBounds(deg- TOLERANCE_DEGREES,deg+ TOLERANCE_DEGREES,gyro.getHeading())){
             Log.d("gyro",gyro.getHeading() + " ");
             waitOneFullHardwareCycle();
