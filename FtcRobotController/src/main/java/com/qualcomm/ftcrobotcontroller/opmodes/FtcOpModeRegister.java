@@ -58,6 +58,7 @@ public class FtcOpModeRegister implements OpModeRegister {
     manager.register("Do Nothing", NullOp.class);
     manager.register("Run Tele-Op", Teleop.class);
     manager.register("Run Auto",Auto.class);
-    manager.register("Vision", BasicVisionSample.class);
+    manager.register("Basic Vision", BasicVisionSample.class);
+    manager.register("Linear Vision", LinearVisionSample.class);
   }
 }

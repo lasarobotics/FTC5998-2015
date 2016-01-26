@@ -10,8 +10,10 @@ import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.lasarobotics.vision.android.Cameras;
 import org.lasarobotics.vision.ftc.resq.Beacon;
 import org.lasarobotics.vision.opmode.LinearVisionOpMode;
+import org.opencv.core.Size;
 
 /**
  * Vision-enabled OpMode
@@ -24,6 +26,34 @@ public class Auto extends LinearVisionOpMode {
     private GyroSensor gyro;
     private Servo slide, dump,carabiner,climber;
     private AHRS navx_device;
+
+    private void visionSetup() throws InterruptedException {
+        //Wait for vision to initialize - this should be the first thing you do
+        waitForVisionStart();
+
+        //Set the camera used for detection
+        this.setCamera(Cameras.SECONDARY);
+        //Set the frame size
+        //Larger = sometimes more accurate, but also much slower
+        //For Testable OpModes, this might make the image appear small - it might be best not to use this
+        this.setFrameSize(new Size(900, 900));
+
+        //Enable extensions. Use what you need.
+        enableExtension(Extensions.BEACON);     //Beacon detection
+        enableExtension(Extensions.ROTATION);   //Automatic screen rotation correction
+
+        //UNCOMMENT THIS IF you're using a SECONDARY (facing toward screen) camera
+        //or when you rotate the phone, sometimes the colors swap
+        rotation.setRotationInversion(true);
+
+        //You can do this for certain phones which switch red and blue
+        //It will rotate the display and detection by 180 degrees, making it upright
+        //rotation.setUnbiasedOrientation(ScreenOrientation.LANDSCAPE_WEST);
+
+        //Set the beacon analysis method
+        //Try them all and see what works!
+        beacon.setAnalysisMethod(Beacon.AnalysisMethod.FAST);
+    }
 
     private void setup() {
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
@@ -56,22 +86,25 @@ public class Auto extends LinearVisionOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+        visionSetup();
         setup();
         waitForStart();
 
         //Run
         //intake.setPower(1);
-        turnToDegNavX(45, -.5);
+        final double power = 1;
+
+        turnToDegNavX(45, -power);
         block(500);
-        runForEncoderCounts(5000, .5);
+        runForEncoderCounts(5000, power);
         block(500);
-        turnToDegNavX(320, .5);
+        turnToDegNavX(320, power);
         block(1000);
-        runForEncoderCounts(2500, .5);
+        runForEncoderCounts(2500, power);
         block(500);
         turnToDegNavX(270, .5);
         block(500);
-        runForEncoderCounts(700, -.5);
+        runForEncoderCounts(700, -power);
 
         int goodCount = 0;
         String lastString = null;
