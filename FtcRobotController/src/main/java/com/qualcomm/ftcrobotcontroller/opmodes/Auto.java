@@ -1,28 +1,29 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
+import android.util.Log;
+
 import com.kauailabs.navx.ftc.AHRS;
 import com.lasarobotics.library.util.MathUtil;
 import com.lasarobotics.library.util.Timers;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import android.util.Log;
+import org.lasarobotics.vision.ftc.resq.Beacon;
+import org.lasarobotics.vision.opmode.LinearVisionOpMode;
 
 /**
- * Created by ehsan on 11/24/15.
+ * Vision-enabled OpMode
  */
-public class Auto extends LinearOpMode {
-    private DcMotor frontLeft, frontRight, backLeft, backRight,intake;
-    private GyroSensor gyro;
+public class Auto extends LinearVisionOpMode {
     private static final int TOLERANCE_DEGREES = 5;
-    private Servo slide, dump,carabiner,climber;
-    private AHRS navx_device;
     private final int NAVX_DIM_I2C_PORT = 1;
     private final byte NAVX_DEVICE_UPDATE_RATE_HZ = 50;
-
+    private DcMotor frontLeft, frontRight, backLeft, backRight,intake;
+    private GyroSensor gyro;
+    private Servo slide, dump,carabiner,climber;
+    private AHRS navx_device;
 
     private void setup() {
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
@@ -59,7 +60,7 @@ public class Auto extends LinearOpMode {
         waitForStart();
 
         //Run
-        intake.setPower(1);
+        //intake.setPower(1);
         turnToDegNavX(45, -.5);
         block(500);
         runForEncoderCounts(5000, .5);
@@ -72,8 +73,42 @@ public class Auto extends LinearOpMode {
         block(500);
         runForEncoderCounts(700, -.5);
 
+        int goodCount = 0;
+        String lastString = null;
+        Beacon.BeaconColor left;
+        Beacon.BeaconColor right;
+
+        //Goal is to get X good frames in a row
+        while (goodCount < 10) {
+            String colorString = beacon.getAnalysis().getColorString();
+
+            telemetry.addData("Good count", goodCount);
+            telemetry.addData("Color", colorString);
+
+            if (!hasNewFrame()) continue;
+            goodCount++;
+            discardFrame();
+
+            if (!beacon.getAnalysis().isBeaconFound()) {
+                goodCount = 0;
+                lastString = null;
+                continue;
+            }
+            left = beacon.getAnalysis().getStateLeft();
+            right = beacon.getAnalysis().getStateRight();
+
+            if (lastString != null && !colorString.equals(lastString)) {
+                goodCount = 0;
+                lastString = null;
+                continue;
+            }
+            lastString = colorString;
+        }
+
+        Log.w("BEACON STATE", beacon.getAnalysis().getColorString());
+
         //Dump
-        intake.setPower(0);
+        //intake.setPower(0);
         climber.setPosition(0);
         waitOneFullHardwareCycle();
 
