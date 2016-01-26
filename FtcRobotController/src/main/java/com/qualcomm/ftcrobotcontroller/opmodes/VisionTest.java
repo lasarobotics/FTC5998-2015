@@ -31,12 +31,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.lasarobotics.library.drive.Tank;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
 import org.lasarobotics.vision.android.Cameras;
 import org.lasarobotics.vision.opmode.VisionOpMode;
 import org.opencv.core.Size;
-import org.lasarobotics.vision.opmode.extensions.BeaconExtension;
 
 /**
  * TeleOp Mode
@@ -44,9 +44,10 @@ import org.lasarobotics.vision.opmode.extensions.BeaconExtension;
  * Enables control of the robot via the gamepad
  */
 public class VisionTest extends VisionOpMode {
+    public static final double correctionFactor = 0.05;
     DcMotor frontLeft, frontRight, backLeft, backRight;
     double leftSpeed, rightSpeed;
-    public static final double correctionFactor = 0.05;
+    DriveState currentState = DriveState.VISION_LOCATEBUTTON;
 
     @Override
     public void init() {
@@ -75,23 +76,11 @@ public class VisionTest extends VisionOpMode {
         //rotation.setUnbiasedOrientation(ScreenOrientation.LANDSCAPE_WEST);
     }
 
-    public enum DriveState
-    {
-        MOVE_FORWARD,
-        MOVE_LEFT,
-        MOVE_TOTARGET,
-        VISION_LOCATEBUTTON,
-        PRESS_BUTTON
-    }
-
-    DriveState currentState = DriveState.VISION_LOCATEBUTTON;
-
     @Override
     public void loop() {
         super.loop();
 
-        switch(currentState)
-        {
+        switch (currentState) {
             case MOVE_FORWARD:
 
                 break;
@@ -103,10 +92,10 @@ public class VisionTest extends VisionOpMode {
                 break;
             case VISION_LOCATEBUTTON:
                 Tank.motor4(frontLeft, frontRight, backLeft, backRight, -leftSpeed, rightSpeed);
-                if (beacon.getAnalysis().getCenter().x > width/2) { // *slowly* increment the compensation so that we don't mess everything up in the case of one bad frame analysis
+                if (beacon.getAnalysis().getCenter().x > width / 2) { // *slowly* increment the compensation so that we don't mess everything up in the case of one bad frame analysis
                     leftSpeed += correctionFactor;
                     rightSpeed -= correctionFactor;
-                } else if (beacon.getAnalysis().getCenter().x < width/2) {
+                } else if (beacon.getAnalysis().getCenter().x < width / 2) {
                     leftSpeed -= correctionFactor;
                     rightSpeed += correctionFactor;
                 } else {
@@ -126,7 +115,7 @@ public class VisionTest extends VisionOpMode {
         telemetry.addData("Beacon Confidence", beacon.getAnalysis().getConfidenceString());
         //telemetry.addData("QR Error", qr.getErrorReason());
         //telemetry.addData("QR String", qr.getText());
-        telemetry.addData("Rotation Compensation", rotation.getRotationAngle());
+        //telemetry.addData("Rotation Compensation", rotation.getRotationAngle());
         telemetry.addData("Frame Rate", fps.getFPSString() + " FPS");
         telemetry.addData("Frame Size", "Width: " + width + " Height: " + height);
     }
@@ -134,5 +123,13 @@ public class VisionTest extends VisionOpMode {
     @Override
     public void stop() {
         super.stop();
+    }
+
+    public enum DriveState {
+        MOVE_FORWARD,
+        MOVE_LEFT,
+        MOVE_TOTARGET,
+        VISION_LOCATEBUTTON,
+        PRESS_BUTTON
     }
 }
