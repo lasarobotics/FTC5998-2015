@@ -1,7 +1,7 @@
 [submodule "ftcandroidlibrary"]
 	path = ftcandroidlibrary
 	url = http://github.com/lasarobotics/ftcandroidlibrary
-	branch = master
+	branch = feature-nav
 
 [submodule "FTCVision"]
 	path = FTCVision

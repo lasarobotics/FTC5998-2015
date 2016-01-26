@@ -40,7 +40,7 @@ public class MonkeyCDo extends OpMode {
         secondController = new Controller(gamepad2);
         liftServo.setPosition(0.5); // set the servo halfway in between 0 and 1, so there can be
 
-        reader = new MonkeyDo("test.txt", hardwareMap.appContext);
+        reader = new MonkeyDo("test.txt");
     }
     @Override
     public void start() {
