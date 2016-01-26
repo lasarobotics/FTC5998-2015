@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 
+
 import android.util.Log;
 
 /**
@@ -59,26 +60,29 @@ public class Auto extends LinearOpMode {
         waitForStart();
 
         //Run
-        intake.setPower(1);
+        //intake.setPower(1);
+        runForEncoderCounts(200, .5);
         turnToDegNavX(45, -.5);
         block(500);
         runForEncoderCounts(5000, .5);
         block(500);
         turnToDegNavX(320, .5);
         block(1000);
-        runForEncoderCounts(2500, .5);
+        runForEncoderCounts(2800, .5);
         block(500);
-        turnToDegNavX(270, .5);
+        turnToDegNavX(280, .5);
         block(500);
-        runForEncoderCounts(700, -.5);
+        runForEncoderCounts(1500, -.5);
 
         //Dump
-        intake.setPower(0);
-        climber.setPosition(0);
         waitOneFullHardwareCycle();
-
+        while (climber.getPosition() > 0){
+            climber.setPosition(climber.getPosition()-.001);
+            block(20);
+        }
+        block(500);
         //Shutdown
-        climber.setPosition(0);
+        intake.setPower(0);
         frontLeft.setPower(0);
         frontRight.setPower(0);
         backLeft.setPower(0);
