@@ -108,6 +108,8 @@ public class Auto extends LinearVisionOpMode {
         final double power = 1;
         //intake.setPower(1);
 
+        runForEncoderCounts(200, power);
+        block(250);
         turnToDegNavX2(30, -power);
         block(500);
         runForEncoderCounts(5000, power);
@@ -119,6 +121,40 @@ public class Auto extends LinearVisionOpMode {
         //turnToDegNavX2(270, power);
         //block(500);
         //runForEncoderCounts(700, -power);
+
+        int goodCount = 0;
+        String lastString = null;
+        Beacon.BeaconColor left;
+        Beacon.BeaconColor right;
+
+        //Goal is to get X good frames in a row
+        while (goodCount < 10) {
+            String colorString = beacon.getAnalysis().getColorString();
+
+            telemetry.addData("Good count", goodCount);
+            telemetry.addData("Color", colorString);
+
+            if (!hasNewFrame()) continue;
+            goodCount++;
+            discardFrame();
+
+            if (!beacon.getAnalysis().isBeaconFound()) {
+                goodCount = 0;
+                lastString = null;
+                continue;
+            }
+            left = beacon.getAnalysis().getStateLeft();
+            right = beacon.getAnalysis().getStateRight();
+
+            if (lastString != null && !colorString.equals(lastString)) {
+                goodCount = 0;
+                lastString = null;
+                continue;
+            }
+            lastString = colorString;
+        }
+
+        Log.w("BEACON STATE", beacon.getAnalysis().getColorString());
 
         //Dump
         //intake.setPower(0);
