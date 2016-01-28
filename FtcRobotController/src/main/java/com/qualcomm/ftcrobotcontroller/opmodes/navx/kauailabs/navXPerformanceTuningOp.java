@@ -29,9 +29,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-package com.qualcomm.ftcrobotcontroller.opmodes.navx;
-
-import android.os.SystemClock;
+package com.qualcomm.ftcrobotcontroller.opmodes.navx.kauailabs;
 
 import com.kauailabs.navx.ftc.AHRS;
 import com.kauailabs.navx.ftc.navXPerformanceMonitor;
@@ -42,7 +40,7 @@ import java.text.DecimalFormat;
 
 /**
  * navX-Micro Performance Tuning Op
- *
+ * <p/>
  * This opmode provides insight into the peformance of the communication
  * with the navX-Model sensor over the I2C bus via the Core Device Interface
  * Module.  Since the Android operating system is not a real-time
@@ -50,11 +48,11 @@ import java.text.DecimalFormat;
  * occurring over a wifi-direct network which can be prone to interference,
  * the actual performance (update rate) achieved may be less than
  * one might expect.
- *
+ * <p/>
  * Since the navX-Model devices integrate sensor data onboard, to achieve
  * the best performance for device control methods like a PID controller
  * that work best with constant-time updates, the strategy is to:
- *
+ * <p/>
  * 1) Configure the navX-Model device to a high update rate (e.g., 50Hz)
  * 2) Using this performance-tuning Op-Mode (with all other
  * sensors connected, just as your robot will be configured for normal
@@ -65,63 +63,64 @@ import java.text.DecimalFormat;
  */
 public class navXPerformanceTuningOp extends OpMode {
 
-  /* This is the port on the Core Device Interface Module */
+    /* This is the port on the Core Device Interface Module */
   /* in which the navX-Micro is connected.  Modify this  */
   /* depending upon which I2C port you are using.        */
-  private final int NAVX_DIM_I2C_PORT = 0;
+    private final int NAVX_DIM_I2C_PORT = 0;
 
-  private AHRS navx_device;
-  private navXPerformanceMonitor navx_perfmon;
-  private byte sensor_update_rate_hz = 40;
-  private ElapsedTime runtime = new ElapsedTime();
+    private AHRS navx_device;
+    private navXPerformanceMonitor navx_perfmon;
+    private byte sensor_update_rate_hz = 40;
+    private ElapsedTime runtime = new ElapsedTime();
 
-  @Override
-  public void init() {
-    AHRS.setLogging(true);
-    navx_device = AHRS.getInstance(hardwareMap.deviceInterfaceModule.get("dim"),
-            NAVX_DIM_I2C_PORT,
-            AHRS.DeviceDataType.kProcessedData,
-            sensor_update_rate_hz);
-    navx_perfmon = new navXPerformanceMonitor(navx_device);
-  }
+    @Override
+    public void init() {
+        AHRS.setLogging(true);
+        navx_device = AHRS.getInstance(hardwareMap.deviceInterfaceModule.get("dim"),
+                NAVX_DIM_I2C_PORT,
+                AHRS.DeviceDataType.kProcessedData,
+                sensor_update_rate_hz);
+        navx_perfmon = new navXPerformanceMonitor(navx_device);
+    }
 
-@Override
-  public void start() {
-    navx_device.registerCallback(navx_perfmon);
-}
+    @Override
+    public void start() {
+        navx_device.registerCallback(navx_perfmon);
+    }
 
-  @Override
-  public void stop() {
-    navx_device.close();
-  }
-  /*
-     * Code to run when the op mode is first enabled goes here
-     * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#start()
+    @Override
+    public void stop() {
+        navx_device.close();
+    }
+
+    /*
+       * Code to run when the op mode is first enabled goes here
+       * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#start()
+       */
+    @Override
+    public void init_loop() {
+        telemetry.addData("navX Op Init Loop", runtime.toString());
+    }
+
+    /*
+     * This method will be called repeatedly in a loop
+     * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#loop()
      */
-  @Override
-  public void init_loop() {
-    telemetry.addData("navX Op Init Loop", runtime.toString());
-  }
+    @Override
+    public void loop() {
 
-  /*
-   * This method will be called repeatedly in a loop
-   * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#loop()
-   */
-  @Override
-  public void loop() {
+        boolean connected = navx_device.isConnected();
+        telemetry.addData("1 navX-Device...............:", connected ?
+                "Connected" : "Disconnected");
+        String gyrocal, motion;
+        DecimalFormat df = new DecimalFormat("#.##");
 
-      boolean connected = navx_device.isConnected();
-      telemetry.addData("1 navX-Device...............:", connected ?
-              "Connected" : "Disconnected" );
-      String gyrocal, motion;
-      DecimalFormat df = new DecimalFormat("#.##");
-
-      telemetry.addData("2 Sensor Rate (Hz)...", Byte.toString(navx_device.getActualUpdateRate()));
-      telemetry.addData("3 Transfer Rate (Hz).", Integer.toString(navx_device.getCurrentTransferRate()));
-      telemetry.addData("4 Delivvered Rate (Hz)", Integer.toString(navx_perfmon.getDeliveredRateHz()));
-      telemetry.addData("5 Missed Samples.....", Integer.toString(navx_perfmon.getNumMissedSensorTimestampedSamples()));
-      telemetry.addData("6 Duplicate Samples..", Integer.toString(navx_device.getDuplicateDataCount()));
-      telemetry.addData("7 Sensor deltaT (ms).", Long.toString(navx_perfmon.getLastSensorTimestampDeltaMS()));
-      telemetry.addData("8 System deltaT (ms).", Long.toString(navx_perfmon.getLastSystemTimestampDeltaMS()));
-  }
+        telemetry.addData("2 Sensor Rate (Hz)...", Byte.toString(navx_device.getActualUpdateRate()));
+        telemetry.addData("3 Transfer Rate (Hz).", Integer.toString(navx_device.getCurrentTransferRate()));
+        telemetry.addData("4 Delivvered Rate (Hz)", Integer.toString(navx_perfmon.getDeliveredRateHz()));
+        telemetry.addData("5 Missed Samples.....", Integer.toString(navx_perfmon.getNumMissedSensorTimestampedSamples()));
+        telemetry.addData("6 Duplicate Samples..", Integer.toString(navx_device.getDuplicateDataCount()));
+        telemetry.addData("7 Sensor deltaT (ms).", Long.toString(navx_perfmon.getLastSensorTimestampDeltaMS()));
+        telemetry.addData("8 System deltaT (ms).", Long.toString(navx_perfmon.getLastSystemTimestampDeltaMS()));
+    }
 }

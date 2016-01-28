@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
+import com.qualcomm.ftcrobotcontroller.opmodes.navx.NavXSensorTest;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeManager;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeRegister;
 
@@ -58,6 +59,7 @@ public class FtcOpModeRegister implements OpModeRegister {
     manager.register("Do Nothing", NullOp.class);
     manager.register("Run Tele-Op", Teleop.class);
     manager.register("Run Auto",Auto.class);
+    manager.register("NavX Test", NavXSensorTest.class);
     manager.register("Vision", BasicVisionSample.class);
   }
 }

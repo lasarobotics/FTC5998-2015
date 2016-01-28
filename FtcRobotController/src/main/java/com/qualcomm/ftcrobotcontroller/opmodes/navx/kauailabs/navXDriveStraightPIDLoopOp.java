@@ -28,59 +28,56 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
-package com.qualcomm.ftcrobotcontroller.opmodes.navx;
-
-import android.util.Log;
+package com.qualcomm.ftcrobotcontroller.opmodes.navx.kauailabs;
 
 import com.kauailabs.navx.ftc.AHRS;
 import com.kauailabs.navx.ftc.navXPIDController;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.text.DecimalFormat;
 
 /*
- * An example loop op mode where the robot will rotate
- * to a specified angle an then stop.
+ * An example loop op mode where the robot will drive in
+ * a straight line (where the driving direction is guided by
+ * the Yaw angle from a navX-Model device).
  *
  * This example uses a simple PID controller configuration
  * with a P coefficient, and will likely need tuning in order
  * to achieve optimal performance.
  *
  * Note that for the best accuracy, a reasonably high update rate
- * for the navX-Model sensor should be used.
+ * for the navX-Model sensor should be used.  This example uses
+ * the default update rate (50Hz), which may be lowered in order
+ * to reduce the frequency of the updates to the drive system.
  */
-public class navXRotateToAnglePIDLoopOp extends OpMode {
-    DcMotor leftMotor;
-    DcMotor rightMotor;
 
+public class navXDriveStraightPIDLoopOp extends OpMode {
     /* This is the port on the Core Device Interface Module        */
     /* in which the navX-Model Device is connected.  Modify this  */
     /* depending upon which I2C port you are using.               */
     private final int NAVX_DIM_I2C_PORT = 0;
-    private AHRS navx_device;
-    private navXPIDController yawPIDController;
-    private ElapsedTime runtime = new ElapsedTime();
-
     private final byte NAVX_DEVICE_UPDATE_RATE_HZ = 50;
-
-    private final double TARGET_ANGLE_DEGREES = 90.0;
+    private final double TARGET_ANGLE_DEGREES = 0.0;
     private final double TOLERANCE_DEGREES = 2.0;
     private final double MIN_MOTOR_OUTPUT_VALUE = -1.0;
     private final double MAX_MOTOR_OUTPUT_VALUE = 1.0;
     private final double YAW_PID_P = 0.005;
     private final double YAW_PID_I = 0.0;
     private final double YAW_PID_D = 0.0;
-
+    DcMotor leftMotor;
+    DcMotor rightMotor;
     navXPIDController.PIDResult yawPIDResult;
     DecimalFormat df;
+    private AHRS navx_device;
+    private navXPIDController yawPIDController;
+    private ElapsedTime runtime = new ElapsedTime();
 
     @Override
     public void init() {
-        leftMotor = hardwareMap.dcMotor.get("frontLeft");
-        rightMotor = hardwareMap.dcMotor.get("frontRight");
+        leftMotor = hardwareMap.dcMotor.get("left_drive");
+        rightMotor = hardwareMap.dcMotor.get("right_drive");
 
         navx_device = AHRS.getInstance(hardwareMap.deviceInterfaceModule.get("dim"),
                 NAVX_DIM_I2C_PORT,
@@ -95,7 +92,7 @@ public class navXRotateToAnglePIDLoopOp extends OpMode {
         //rightMotor.setChannelMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
 
         /* Create a PID Controller which uses the Yaw Angle as input. */
-        yawPIDController = new navXPIDController( navx_device,
+        yawPIDController = new navXPIDController(navx_device,
                 navXPIDController.navXTimestampedDataSource.YAW);
 
         /* Configure the PID controller */
@@ -107,6 +104,10 @@ public class navXRotateToAnglePIDLoopOp extends OpMode {
         yawPIDController.enable(true);
 
         df = new DecimalFormat("#.##");
+    }
+
+    public double limit(double a) {
+        return Math.min(Math.max(a, MIN_MOTOR_OUTPUT_VALUE), MAX_MOTOR_OUTPUT_VALUE);
     }
 
     @Override
@@ -123,17 +124,21 @@ public class navXRotateToAnglePIDLoopOp extends OpMode {
            with the new PID value with each new output value.
          */
 
-        if ( yawPIDController.isNewUpdateAvailable(yawPIDResult) ) {
-            if ( yawPIDResult.isOnTarget() ) {
-                leftMotor.setPowerFloat();
-                rightMotor.setPowerFloat();
-                telemetry.addData("Motor Output", df.format(0.00));
+        /* Drive straight forward at 1/2 of full drive speed */
+        double drive_speed = 0.5;
+
+        if (yawPIDController.isNewUpdateAvailable(yawPIDResult)) {
+            if (yawPIDResult.isOnTarget()) {
+                leftMotor.setPower(drive_speed);
+                rightMotor.setPower(drive_speed);
+                telemetry.addData("Motor Output", df.format(drive_speed) + ", " +
+                        df.format(drive_speed));
             } else {
                 double output = yawPIDResult.getOutput();
-                leftMotor.setPower(output);
-                rightMotor.setPower(-output);
-                telemetry.addData("Motor Output", df.format(output) + ", " +
-                        df.format(-output));
+                leftMotor.setPower(limit(drive_speed + output));
+                rightMotor.setPower(limit(drive_speed - output));
+                telemetry.addData("Motor Output", df.format(limit(drive_speed + output)) + ", " +
+                        df.format(limit(drive_speed - output)));
             }
         } else {
             /* No sensor update has been received since the last time  */

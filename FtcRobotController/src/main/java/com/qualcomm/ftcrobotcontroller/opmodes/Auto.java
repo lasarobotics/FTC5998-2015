@@ -26,7 +26,7 @@ import java.text.DecimalFormat;
  * Vision-enabled autonomous
  */
 public class Auto extends LinearVisionOpMode {
-    private final double TOLERANCE_DEGREES = 1.0;
+    private final double TOLERANCE_DEGREES = 5.0;
     private final int NAVX_DIM_I2C_PORT = 1;
     private final double YAW_PID_P = 0.05;
     private final double YAW_PID_I = 0;
@@ -105,18 +105,20 @@ public class Auto extends LinearVisionOpMode {
         waitForStart();
 
         //Run
+        final double power = 1;
         //intake.setPower(1);
-        turnToDegNavX(45, -.5);
+
+        turnToDegNavX2(30, -power);
         block(500);
-        runForEncoderCounts(5000, .5);
-        block(500);
-        turnToDegNavX(320, .5);
-        block(1000);
-        runForEncoderCounts(2500, .5);
-        block(500);
-        turnToDegNavX(270, .5);
-        block(500);
-        runForEncoderCounts(700, -.5);
+        runForEncoderCounts(5000, power);
+        //block(500);
+        //turnToDegNavX2(320, power);
+        //block(1000);
+        //runForEncoderCounts(2500, power);
+        //block(500);
+        //turnToDegNavX2(270, power);
+        //block(500);
+        //runForEncoderCounts(700, -power);
 
         //Dump
         //intake.setPower(0);

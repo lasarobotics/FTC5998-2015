@@ -29,7 +29,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-package com.qualcomm.ftcrobotcontroller.opmodes.navx;
+package com.qualcomm.ftcrobotcontroller.opmodes.navx.kauailabs;
 
 import com.kauailabs.navx.ftc.AHRS;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -38,69 +38,70 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import java.text.DecimalFormat;
 
 /**
- *  navX-Micro Processed Data Mode Op
- * <p>
+ * navX-Micro Processed Data Mode Op
+ * <p/>
  * Acquires motion-in-progress indicator from navX-Micro
  * and displays it in the Robot DriveStation
  * as telemetry data.
  */
 public class navXMotionDetectionOp extends OpMode {
 
-  /* This is the port on the Core Device Interace Module */
+    /* This is the port on the Core Device Interace Module */
   /* in which the navX-Micro is connected.  Modify this  */
   /* depending upon which I2C port you are using.        */
-  private final int NAVX_DIM_I2C_PORT = 0;
+    private final int NAVX_DIM_I2C_PORT = 0;
 
-  private String startDate;
-  private ElapsedTime runtime = new ElapsedTime();
-  private AHRS navx_device;
+    private String startDate;
+    private ElapsedTime runtime = new ElapsedTime();
+    private AHRS navx_device;
 
-  @Override
-  public void init() {
-    navx_device = AHRS.getInstance(hardwareMap.deviceInterfaceModule.get("dim"),
-            NAVX_DIM_I2C_PORT,
-            AHRS.DeviceDataType.kProcessedData);
-  }
+    @Override
+    public void init() {
+        navx_device = AHRS.getInstance(hardwareMap.deviceInterfaceModule.get("dim"),
+                NAVX_DIM_I2C_PORT,
+                AHRS.DeviceDataType.kProcessedData);
+    }
 
-  @Override
-  public void stop() {
-    navx_device.close();
-  }
-  /*
-     * Code to run when the op mode is first enabled goes here
-     * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#start()
+    @Override
+    public void stop() {
+        navx_device.close();
+    }
+
+    /*
+       * Code to run when the op mode is first enabled goes here
+       * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#start()
+       */
+    @Override
+    public void init_loop() {
+        telemetry.addData("navX Op Init Loop", runtime.toString());
+    }
+
+    /*
+     * This method will be called repeatedly in a loop
+     * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#loop()
      */
-  @Override
-  public void init_loop() {
-    telemetry.addData("navX Op Init Loop", runtime.toString());
-  }
+    @Override
+    public void loop() {
 
-  /*
-   * This method will be called repeatedly in a loop
-   * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#loop()
-   */
-  @Override
-  public void loop() {
+        boolean connected = navx_device.isConnected();
+        telemetry.addData("1 navX-Device", connected ?
+                "Connected" : "Disconnected");
+        String gyrocal, motion;
+        DecimalFormat df = new DecimalFormat("#.##");
 
-      boolean connected = navx_device.isConnected();
-      telemetry.addData("1 navX-Device", connected ?
-              "Connected" : "Disconnected" );
-      String gyrocal, motion;
-      DecimalFormat df = new DecimalFormat("#.##");
-
-      if ( connected ) {
-          gyrocal = (navx_device.isCalibrating() ?
-                  "CALIBRATING" : "Calibration Complete");
-          motion = (navx_device.isMoving() ? "Moving" : "Not Moving");
-          if ( navx_device.isRotating() ) {
-              motion += ", Rotating";
-          }
-      } else {
-          gyrocal =
-            motion = "-------";
-      }
-      telemetry.addData("2 GyroAccel", gyrocal );
-      telemetry.addData("3 Motion", motion);
-  }
+        if (connected) {
+            gyrocal = (navx_device.isCalibrating() ?
+                    "CALIBRATING" : "Calibration Complete");
+            motion = (navx_device.isMoving() ? "Moving" : "Not Moving");
+            if (navx_device.isRotating()) {
+                motion += ", Rotating";
+            }
+        } else {
+            gyrocal =
+                    motion = "-------";
+        }
+        telemetry.addData("2 GyroAccel", gyrocal);
+        telemetry.addData("3 Motion", motion);
+    }
 
 }
