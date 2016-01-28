@@ -1,29 +1,59 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
+import android.util.Log;
+
 import com.kauailabs.navx.ftc.AHRS;
 import com.lasarobotics.library.util.MathUtil;
 import com.lasarobotics.library.util.Timers;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-
-import android.util.Log;
+import org.lasarobotics.vision.android.Cameras;
+import org.lasarobotics.vision.ftc.resq.Beacon;
+import org.lasarobotics.vision.opmode.LinearVisionOpMode;
+import org.opencv.core.Size;
 
 /**
- * Created by ehsan on 11/24/15.
+ * Vision-enabled opmode
  */
-public class Auto extends LinearOpMode {
-    private DcMotor frontLeft, frontRight, backLeft, backRight,intake;
-    private GyroSensor gyro;
+public class Auto extends LinearVisionOpMode {
     private static final int TOLERANCE_DEGREES = 5;
-    private Servo slide, dump,carabiner,climber;
-    private AHRS navx_device;
     private final int NAVX_DIM_I2C_PORT = 1;
     private final byte NAVX_DEVICE_UPDATE_RATE_HZ = 50;
+    private DcMotor frontLeft, frontRight, backLeft, backRight,intake;
+    private GyroSensor gyro;
+    private Servo slide, dump,carabiner,climber;
+    private AHRS navx_device;
 
+    private void visionSetup() throws InterruptedException {
+        //Wait for vision to initialize - this should be the first thing you do
+        waitForVisionStart();
+
+        //Set the camera used for detection
+        this.setCamera(Cameras.SECONDARY);
+        //Set the frame size
+        //Larger = sometimes more accurate, but also much slower
+        //For Testable OpModes, this might make the image appear small - it might be best not to use this
+        this.setFrameSize(new Size(900, 900));
+
+        //Enable extensions. Use what you need.
+        enableExtension(Extensions.BEACON);     //Beacon detection
+        enableExtension(Extensions.ROTATION);   //Automatic screen rotation correction
+
+        //UNCOMMENT THIS IF you're using a SECONDARY (facing toward screen) camera
+        //or when you rotate the phone, sometimes the colors swap
+        rotation.setRotationInversion(true);
+
+        //You can do this for certain phones which switch red and blue
+        //It will rotate the display and detection by 180 degrees, making it upright
+        //rotation.setUnbiasedOrientation(ScreenOrientation.LANDSCAPE_WEST);
+
+        //Set the beacon analysis method
+        //Try them all and see what works!
+        beacon.setAnalysisMethod(Beacon.AnalysisMethod.FAST);
+    }
 
     private void setup() {
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
@@ -56,33 +86,67 @@ public class Auto extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+        visionSetup();
         setup();
         waitForStart();
 
         //Run
         //intake.setPower(1);
-        runForEncoderCounts(200, .5);
-        turnToDegNavX(45, -.5);
+        final double power = 1;
+
+        turnToDegNavX(45, -power);
         block(500);
-        runForEncoderCounts(5000, .5);
+        runForEncoderCounts(5000, power);
         block(500);
-        turnToDegNavX(320, .5);
+        turnToDegNavX(320, power);
         block(1000);
-        runForEncoderCounts(2800, .5);
+        runForEncoderCounts(2500, power);
         block(500);
-        turnToDegNavX(280, .5);
+        turnToDegNavX(270, .5);
         block(500);
-        runForEncoderCounts(1500, -.5);
+        runForEncoderCounts(700, -power);
+
+        int goodCount = 0;
+        String lastString = null;
+        Beacon.BeaconColor left;
+        Beacon.BeaconColor right;
+
+        //Goal is to get X good frames in a row
+        while (goodCount < 10) {
+            String colorString = beacon.getAnalysis().getColorString();
+
+            telemetry.addData("Good count", goodCount);
+            telemetry.addData("Color", colorString);
+
+            if (!hasNewFrame()) continue;
+            goodCount++;
+            discardFrame();
+
+            if (!beacon.getAnalysis().isBeaconFound()) {
+                goodCount = 0;
+                lastString = null;
+                continue;
+            }
+            left = beacon.getAnalysis().getStateLeft();
+            right = beacon.getAnalysis().getStateRight();
+
+            if (lastString != null && !colorString.equals(lastString)) {
+                goodCount = 0;
+                lastString = null;
+                continue;
+            }
+            lastString = colorString;
+        }
+
+        Log.w("BEACON STATE", beacon.getAnalysis().getColorString());
 
         //Dump
+        //intake.setPower(0);
+        climber.setPosition(0);
         waitOneFullHardwareCycle();
-        while (climber.getPosition() > 0){
-            climber.setPosition(climber.getPosition()-.001);
-            block(20);
-        }
-        block(500);
+
         //Shutdown
-        intake.setPower(0);
+        climber.setPosition(0);
         frontLeft.setPower(0);
         frontRight.setPower(0);
         backLeft.setPower(0);
@@ -90,6 +154,7 @@ public class Auto extends LinearOpMode {
         waitOneFullHardwareCycle();
         telemetry.addData("status", "done");
     }
+
     private void block(int ms) throws InterruptedException {
         Timers mTimers = new Timers();
         mTimers.startClock("delay");
