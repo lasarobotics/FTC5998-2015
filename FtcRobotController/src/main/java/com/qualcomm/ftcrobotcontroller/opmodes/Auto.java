@@ -102,21 +102,22 @@ public class Auto extends LinearVisionOpMode {
 
         //Run
         //intake.setPower(1);
-        final double power = 0.5;
+        final double power = 1;
 
         //NavX2 untested, not using - but power must be set to 1 for v2
-
-        turnToDegNavX(35, -power);
+        runForEncoderCounts(250, power);
+        block(250);
+        turnToDegNavX(35, -.789);
         block(500);
         runForEncoderCounts(5000, power);
         block(500);
-        turnToDegNavX(320, power);
+        turnToDegNavX(340, .789);
         block(1000);
-        runForEncoderCounts(2500, power);
+        runForEncoderCounts(2200, power);
         block(500);
-        turnToDegNavX(270, power);
+        turnToDegNavX(280, .789);
         block(500);
-        runForEncoderCounts(700, -power);
+        runForEncoderCounts(1000, -power);
 
         int goodCount = 0;
         String lastString = null;
@@ -224,8 +225,9 @@ public class Auto extends LinearVisionOpMode {
         backRight.setPower(-power);
 
         while (!MathUtil.inBounds(deg - TOLERANCE_DEGREES, deg + TOLERANCE_DEGREES, convertDegNavX(navx.getYaw()))) {
+        //while((power > 0 && convertDegNavX(navx.getYaw()) > deg + TOLERANCE_DEGREES ) ||(power < 0 && convertDegNavX(navx.getYaw()) < deg-TOLERANCE_DEGREES)) {
             Log.d("gyro", navx.getYaw() + " ");
-            telemetry.addData("gyro", navx.getYaw());
+        telemetry.addData("gyro", navx.getYaw());
             waitOneFullHardwareCycle();
         }
 
