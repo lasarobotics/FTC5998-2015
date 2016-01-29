@@ -2,10 +2,9 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 
 import android.util.Log;
 
+import com.kauailabs.navx.ftc.AHRS;
 import com.kauailabs.navx.ftc.navXPIDController;
 import com.lasarobotics.library.drive.Tank;
-import com.lasarobotics.library.sensor.kauailabs.navx.NavXDevice;
-import com.lasarobotics.library.sensor.kauailabs.navx.NavXPIDController;
 import com.lasarobotics.library.util.MathUtil;
 import com.lasarobotics.library.util.RollingAverage;
 import com.lasarobotics.library.util.Timers;
@@ -38,7 +37,7 @@ public class Auto extends LinearVisionOpMode {
     private DcMotor frontLeft, frontRight, backLeft, backRight,intake;
     private GyroSensor gyro;
     private Servo slide, dump,carabiner,climber;
-    private NavXDevice navx;
+    private AHRS navx;
 
     public double limit(double a) {
         return MathUtil.deadband(MIN_DRIVE_POWER, MathUtil.coerce(-1, 1, a));
@@ -95,7 +94,7 @@ public class Auto extends LinearVisionOpMode {
         dump.setPosition(.5);
         climber.setPosition(1);
         carabiner.setPosition(.85);
-        navx = new NavXDevice(hardwareMap, "dim", NAVX_DIM_I2C_PORT);
+        navx = AHRS.getInstance(hardwareMap.deviceInterfaceModule.get("dim"), NAVX_DIM_I2C_PORT, AHRS.DeviceDataType.kProcessedData, (byte) 50);
     }
 
     @Override
@@ -169,15 +168,15 @@ public class Auto extends LinearVisionOpMode {
         backRight.setPower(0);
     }
     public void turnToDeg(int deg, double power) throws InterruptedException {
-        navx.reset();
+        navx.zeroYaw();
         frontLeft.setPower(power);
         frontRight.setPower(-power);
         backLeft.setPower(power);
         backRight.setPower(-power);
 
-        while (!MathUtil.inBounds(deg - TOLERANCE_DEGREES, deg + TOLERANCE_DEGREES, convertDegNavX(navx.getRotation().x))) {
-            Log.d("gyro", navx.getRotation().x + " ");
-            telemetry.addData("gyro", navx.getRotation().x);
+        while (!MathUtil.inBounds(deg - TOLERANCE_DEGREES, deg + TOLERANCE_DEGREES, convertDegNavX(navx.getYaw()))) {
+            Log.d("gyro", navx.getYaw() + " ");
+            telemetry.addData("gyro", navx.getYaw());
             waitOneFullHardwareCycle();
         }
 
@@ -187,15 +186,15 @@ public class Auto extends LinearVisionOpMode {
         backRight.setPower(0);
     }
     public void turnToDegNavX(int deg, double power) throws InterruptedException{
-        navx.reset();
+        navx.zeroYaw();
         frontLeft.setPower(power);
         frontRight.setPower(-power);
         backLeft.setPower(power);
         backRight.setPower(-power);
 
-        while (!MathUtil.inBounds(deg - TOLERANCE_DEGREES, deg + TOLERANCE_DEGREES, convertDegNavX(navx.getRotation().x))) {
-            Log.d("gyro", navx.getRotation().x + " ");
-            telemetry.addData("gyro", navx.getRotation().x);
+        while (!MathUtil.inBounds(deg - TOLERANCE_DEGREES, deg + TOLERANCE_DEGREES, convertDegNavX(navx.getYaw()))) {
+            Log.d("gyro", navx.getYaw() + " ");
+            telemetry.addData("gyro", navx.getYaw());
             waitOneFullHardwareCycle();
         }
 
@@ -208,8 +207,8 @@ public class Auto extends LinearVisionOpMode {
     public void turnToDegNavX2(int deg, double power) throws InterruptedException {
         Log.d("navx", "started turn for " + deg);
 
-        NavXPIDController yawPIDController = new NavXPIDController(navx, NavXPIDController.DataSource.YAW);
-        navx.reset(); //reset the NavX yaw
+        navXPIDController yawPIDController = new navXPIDController(navx, navXPIDController.navXTimestampedDataSource.YAW);
+        navx.zeroYaw(); //reset the NavX yaw
 
         /* Configure the PID controller */
         yawPIDController.setSetpoint(deg);
@@ -223,15 +222,15 @@ public class Auto extends LinearVisionOpMode {
         RollingAverage<Double> average = new RollingAverage<>(100);
         double lastValue = 0.0;
 
-        while ((Math.abs(navx.getRotation().x - deg) > TOLERANCE_DEGREES ||
+        while ((Math.abs(navx.getYaw() - deg) > TOLERANCE_DEGREES ||
                 !(average.getAverage() < 0.01 * power && average.getSize() >= 20)) //&& abs(power) < some value
                 && opModeIsActive()) {
-            Log.d("navx", "current yaw " + navx.getRotation().x);
+            Log.d("navx", "current yaw " + navx.getYaw());
 
             if (yawPIDController.waitForNewUpdate(yawPIDResult, DEVICE_TIMEOUT_MS)) {
                 double output = yawPIDResult.getOutput();
                 Tank.motor4(frontLeft, frontRight, backLeft, backRight, limit(-output * power), limit(output * power));
-                telemetry.addData("Yaw", df.format(navx.getRotation().x));
+                telemetry.addData("Yaw", df.format(navx.getYaw()));
                 telemetry.addData("PID Power", df.format(output));
                 telemetry.addData("PID Average", df.format(average.getAverage()));
 
