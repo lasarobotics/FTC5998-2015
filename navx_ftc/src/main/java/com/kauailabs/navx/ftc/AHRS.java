@@ -30,7 +30,6 @@ import android.util.Log;
 import com.kauailabs.navx.AHRSProtocol;
 import com.kauailabs.navx.IMUProtocol;
 import com.kauailabs.navx.IMURegisters;
-
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.I2cController;
 import com.qualcomm.robotcore.hardware.I2cDevice;
@@ -57,110 +56,24 @@ import java.util.Arrays;
  */
 public class AHRS {
 
-    /**
-     * Identifies one of the three sensing axes on the navX sensor board.  Note that these axes are
-     * board-relative ("Board Frame"), and are not necessarily the same as the logical axes of the
-     * chassis on which the sensor is mounted.
-     *
-     * For more information on sensor orientation, please see the navX sensor
-     * <a href=http://navx-micro.kauailabs.com//installation/orientation/>Orientation</a> page.
-     */
-    public enum BoardAxis {
-        kBoardAxisX(0),
-        kBoardAxisY(1),
-        kBoardAxisZ(2);
-
-        private int value;
-
-        private BoardAxis(int value) {
-            this.value = value;
-        }
-        public int getValue() {
-            return this.value;
-        }
-    };
-
-    /**
-     * Indicates which sensor board axis is used as the "yaw" (gravity) axis.
-     *
-     * This selection may be modified via the <a href=http://navx-micro.kauailabs.com/installation/omnimount/>Omnimount</a> feature.
-     *
-     */
-    static public class BoardYawAxis
-    {
-        public BoardAxis board_axis;
-        public boolean up;
-    };
-
-    /**
-     * The DeviceDataType specifies the
-     * type of data to be retrieved from the sensor.  Due to limitations in the
-     * communication bandwidth, only a subset of all available data can be streamed
-     * and still maintain a 50Hz update rate via the Core Device Interface Module,
-     * since it is limited to a maximum of one 26-byte transfer every 10ms.
-     * Note that if all data types are required,
-     */
-    public enum DeviceDataType {
-        /**
-         * (default):  All 6 and 9-axis processed data, sensor status and timestamp
-         */
-        kProcessedData(0),
-        /**
-         * Unit Quaternions and unprocessed data from each individual sensor.  Note that
-         * this data does not include a timestamp.  If a timestamp is needed, use
-         * the kAll flag instead.
-         */
-        kQuatAndRawData(1),
-        /**
-         * All processed and raw data, sensor status and timestamps.  Note that on a
-         * Android-based FTC robot using the "Core Device Interface Module", acquiring
-         * all data requires to I2C transactions.
-         */
-        kAll(3);
-
-        private int value;
-
-        private DeviceDataType(int value){
-            this.value = value;
-        }
-
-        public int getValue(){
-            return this.value;
-        }
-    };
-
-    interface IoCallback {
-        public boolean ioComplete( boolean read, int address, int len, byte[] data);
-    };
-
-    private class BoardState {
-        public short capability_flags;
-        public byte  update_rate_hz;
-        public short accel_fsr_g;
-        public short gyro_fsr_dps;
-        public byte  op_status;
-        public byte  cal_status;
-        public byte  selftest_status;
-    }
-
+    private static final int NAVX_DEFAULT_UPDATE_RATE_HZ = 50;
     private static AHRS instance = null;
     private static boolean enable_logging = false;
-    private static final int NAVX_DEFAULT_UPDATE_RATE_HZ = 50;
-
+    private static DimStateTracker global_dim_state_tracker;
+    final int NAVX_I2C_DEV_7BIT_ADDRESS = 0x32;
+    final int NAVX_I2C_DEV_8BIT_ADDRESS = NAVX_I2C_DEV_7BIT_ADDRESS << 1;
+    private final int MAX_NUM_CALLBACKS = 3;
+    private final float DEV_UNITS_MAX = 32768.0f;
+    private final float UTESLA_PER_DEV_UNIT = 0.15f;
+    AHRSProtocol.AHRSPosUpdate curr_data;
+    BoardState board_state;
+    AHRSProtocol.BoardID board_id;
+    IMUProtocol.GyroUpdate raw_data_update;
     private DeviceInterfaceModule dim = null;
     private navXIOThread io_thread_obj;
     private Thread io_thread;
     private int update_rate_hz = NAVX_DEFAULT_UPDATE_RATE_HZ;
     private IDataArrivalSubscriber callbacks[];
-    private final int MAX_NUM_CALLBACKS = 3;
-
-    AHRSProtocol.AHRSPosUpdate curr_data;
-    BoardState board_state;
-    AHRSProtocol.BoardID board_id;
-    IMUProtocol.GyroUpdate raw_data_update;
-
-    final int NAVX_I2C_DEV_7BIT_ADDRESS = 0x32;
-    final int NAVX_I2C_DEV_8BIT_ADDRESS = NAVX_I2C_DEV_7BIT_ADDRESS << 1;
 
     protected AHRS(DeviceInterfaceModule dim, int dim_i2c_port,
                    DeviceDataType data_type, int update_rate_hz) {
@@ -177,60 +90,6 @@ public class AHRS {
 
         io_thread       = new Thread(io_thread_obj);
         io_thread.start();
-    }
-
-    /**
-     * Registers a callback interface.  This interface
-     * will be called back when new data is available,
-     * based upon a change in the sensor timestamp.
-     *<p>
-     * Note that this callback will occur within the context of the
-     * device IO thread, which is not the same thread context the
-     * caller typically executes in.
-     */
-    public boolean registerCallback( IDataArrivalSubscriber callback ) {
-        boolean registered = false;
-        for ( int i = 0; i < this.callbacks.length; i++ ) {
-            if (this.callbacks[i] == null) {
-                this.callbacks[i] = callback;
-                registered = true;
-                break;
-            }
-        }
-        return registered;
-    }
-
-    /**
-     * Deregisters a previously registered callback interface.
-     *
-     * Be sure to deregister any callback which have been
-     * previously registered, to ensure that the object
-     * implementing the callback interface does not continue
-     * to be accessed when no longer necessary.
-     */
-    public boolean deregisterCallback( IDataArrivalSubscriber callback ) {
-        boolean deregistered = false;
-        for ( int i = 0; i < this.callbacks.length; i++ ) {
-            if (this.callbacks[i] == callback) {
-                this.callbacks[i] = null;
-                deregistered = true;
-                break;
-            }
-        }
-        return deregistered;
-    }
-
-    public void close() {
-        io_thread_obj.stop();
-        for ( int i = 0; i < callbacks.length; i++ ) {
-            callbacks[i] = null;
-        }
-        try {
-            io_thread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        instance = null;
     }
 
     /**
@@ -291,6 +150,13 @@ public class AHRS {
         return instance;
     }
 
+    /* Returns 'true' if AHRS class logging is enabled, otherwise
+     * returns 'false'.
+     */
+    public static boolean getLogging() {
+        return enable_logging;
+    }
+
     /* Configures the AHRS class logging.  To enable logging,
      * the input parameter should be set to 'true'.
      */
@@ -298,11 +164,58 @@ public class AHRS {
         enable_logging = enabled;
     }
 
-    /* Returns 'true' if AHRS class logging is enabled, otherwise
-     * returns 'false'.
+    /**
+     * Registers a callback interface.  This interface
+     * will be called back when new data is available,
+     * based upon a change in the sensor timestamp.
+     *<p>
+     * Note that this callback will occur within the context of the
+     * device IO thread, which is not the same thread context the
+     * caller typically executes in.
      */
-    public static boolean getLogging() {
-        return enable_logging;
+    public boolean registerCallback(IDataArrivalSubscriber callback) {
+        boolean registered = false;
+        for (int i = 0; i < this.callbacks.length; i++) {
+            if (this.callbacks[i] == null) {
+                this.callbacks[i] = callback;
+                registered = true;
+                break;
+            }
+        }
+        return registered;
+    }
+
+    /**
+     * Deregisters a previously registered callback interface.
+     * <p/>
+     * Be sure to deregister any callback which have been
+     * previously registered, to ensure that the object
+     * implementing the callback interface does not continue
+     * to be accessed when no longer necessary.
+     */
+    public boolean deregisterCallback(IDataArrivalSubscriber callback) {
+        boolean deregistered = false;
+        for (int i = 0; i < this.callbacks.length; i++) {
+            if (this.callbacks[i] == callback) {
+                this.callbacks[i] = null;
+                deregistered = true;
+                break;
+            }
+        }
+        return deregistered;
+    }
+
+    public void close() {
+        io_thread_obj.stop();
+        for (int i = 0; i < callbacks.length; i++) {
+            callbacks[i] = null;
+        }
+        try {
+            io_thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        instance = null;
     }
 
     /* Returns the "port number" on the Core Device Interface Module
@@ -456,18 +369,6 @@ public class AHRS {
         return this.io_thread_obj.last_second_hertz;
     }
 
-    /* Returns the number of navX-Model processed data samples
-     * that were retrieved from the sensor that had a sensor
-     * timestamp value equal to the timestamp of the last
-     * sensor data sample.
-     *
-     * This information can be used to match the navX-Model
-     * sensor update rate w/the effective update rate which
-     * can be achieved in the Robot Controller, taking into
-     * account the communication over the network with the
-     * Core Device Interface Module.
-     */
-
     public int getDuplicateDataCount() {
         return this.io_thread_obj.getDuplicateDataCount();
     }
@@ -485,6 +386,18 @@ public class AHRS {
     public double getByteCount() {
         return io_thread_obj.getByteCount();
     }
+
+    /* Returns the number of navX-Model processed data samples
+     * that were retrieved from the sensor that had a sensor
+     * timestamp value equal to the timestamp of the last
+     * sensor data sample.
+     *
+     * This information can be used to match the navX-Model
+     * sensor update rate w/the effective update rate which
+     * can be achieved in the Robot Controller, taking into
+     * account the communication over the network with the
+     * Core Device Interface Module.
+     */
 
     /**
      * Returns the count of valid updates which have
@@ -660,8 +573,6 @@ public class AHRS {
                 AHRSProtocol.NAVX_CAL_STATUS_MAG_CAL_COMPLETE) != 0;
     }
 
-    /* Unit Quaternions */
-
     /**
      * Returns the imaginary portion (W) of the Orientation Quaternion which
      * fully describes the current sensor orientation with respect to the
@@ -677,6 +588,7 @@ public class AHRS {
     public float getQuaternionW() {
         return ((float)curr_data.quat_w / 16384.0f);
     }
+
     /**
      * Returns the real portion (X axis) of the Orientation Quaternion which
      * fully describes the current sensor orientation with respect to the
@@ -692,6 +604,9 @@ public class AHRS {
     public float getQuaternionX() {
         return ((float)curr_data.quat_x / 16384.0f);
     }
+
+    /* Unit Quaternions */
+
     /**
      * Returns the real portion (X axis) of the Orientation Quaternion which
      * fully describes the current sensor orientation with respect to the
@@ -710,6 +625,7 @@ public class AHRS {
     public float getQuaternionY() {
         return ((float)curr_data.quat_y / 16384.0f);
     }
+
     /**
      * Returns the real portion (X axis) of the Orientation Quaternion which
      * fully describes the current sensor orientation with respect to the
@@ -798,8 +714,6 @@ public class AHRS {
         return fw_version;
     }
 
-    private final float DEV_UNITS_MAX = 32768.0f;
-
     /**
      * Returns the current raw (unprocessed) X-axis gyro rotation rate (in degrees/sec).  NOTE:  this
      * value is un-processed, and should only be accessed by advanced users.
@@ -875,8 +789,6 @@ public class AHRS {
         return this.raw_data_update.accel_z / (DEV_UNITS_MAX / (float)this.board_state.accel_fsr_g);
     }
 
-    private final float UTESLA_PER_DEV_UNIT = 0.15f;
-
     /**
      * Returns the current raw (unprocessed) X-axis magnetometer reading (in uTesla).  NOTE:
      * this value is unprocessed, and should only be accessed by advanced users.  This raw value
@@ -928,11 +840,115 @@ public class AHRS {
         return 0;
     }
 
-    class navXIOThread implements Runnable, AHRS.IoCallback {
+    public DimStateTracker getDimStateTrackerInstance() {
+        if (global_dim_state_tracker == null) {
+            global_dim_state_tracker = new DimStateTracker();
+        }
+        return global_dim_state_tracker;
+    }
 
+    /**
+     * Identifies one of the three sensing axes on the navX sensor board.  Note that these axes are
+     * board-relative ("Board Frame"), and are not necessarily the same as the logical axes of the
+     * chassis on which the sensor is mounted.
+     * <p/>
+     * For more information on sensor orientation, please see the navX sensor
+     * <a href=http://navx-micro.kauailabs.com//installation/orientation/>Orientation</a> page.
+     */
+    public enum BoardAxis {
+        kBoardAxisX(0),
+        kBoardAxisY(1),
+        kBoardAxisZ(2);
+
+        private int value;
+
+        BoardAxis(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return this.value;
+        }
+    }
+
+    /**
+     * The DeviceDataType specifies the
+     * type of data to be retrieved from the sensor.  Due to limitations in the
+     * communication bandwidth, only a subset of all available data can be streamed
+     * and still maintain a 50Hz update rate via the Core Device Interface Module,
+     * since it is limited to a maximum of one 26-byte transfer every 10ms.
+     * Note that if all data types are required,
+     */
+    public enum DeviceDataType {
+        /**
+         * (default):  All 6 and 9-axis processed data, sensor status and timestamp
+         */
+        kProcessedData(0),
+        /**
+         * Unit Quaternions and unprocessed data from each individual sensor.  Note that
+         * this data does not include a timestamp.  If a timestamp is needed, use
+         * the kAll flag instead.
+         */
+        kQuatAndRawData(1),
+        /**
+         * All processed and raw data, sensor status and timestamps.  Note that on a
+         * Android-based FTC robot using the "Core Device Interface Module", acquiring
+         * all data requires to I2C transactions.
+         */
+        kAll(3);
+
+        private int value;
+
+        DeviceDataType(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return this.value;
+        }
+    }
+
+    enum DimState {
+        UNKNOWN,
+        WAIT_FOR_MODE_CONFIG_COMPLETE,
+        WAIT_FOR_I2C_TRANSFER_COMPLETION,
+        WAIT_FOR_HOST_BUFFER_TRANSFER_COMPLETION,
+        READY
+    }
+
+    interface IoCallback {
+        boolean ioComplete(boolean read, int address, int len, byte[] data);
+    }
+
+    /**
+     * Indicates which sensor board axis is used as the "yaw" (gravity) axis.
+     * <p/>
+     * This selection may be modified via the <a href=http://navx-micro.kauailabs.com/installation/omnimount/>Omnimount</a> feature.
+     */
+    static public class BoardYawAxis {
+        public BoardAxis board_axis;
+        public boolean up;
+    }
+
+    private class BoardState {
+        public short capability_flags;
+        public byte update_rate_hz;
+        public short accel_fsr_g;
+        public short gyro_fsr_dps;
+        public byte op_status;
+        public byte cal_status;
+        public byte selftest_status;
+    }
+
+    class navXIOThread implements Runnable, IoCallback {
+
+        final int NAVX_REGISTER_FIRST = IMURegisters.NAVX_REG_WHOAMI;
+        final int NAVX_REGISTER_PROC_FIRST = IMURegisters.NAVX_REG_SENSOR_STATUS_L;
+        final int NAVX_REGISTER_RAW_FIRST = IMURegisters.NAVX_REG_QUAT_W_L;
+        final int I2C_TIMEOUT_MS = 500;
+        protected boolean keep_running;
         int dim_port;
         int update_rate_hz;
-        protected boolean keep_running;
         boolean request_zero_yaw;
         boolean is_connected;
         int byte_count;
@@ -948,11 +964,6 @@ public class AHRS {
         int hertz_counter;
         Object io_thread_event;
         Object reset_yaw_critical_section;
-
-        final int NAVX_REGISTER_FIRST           = IMURegisters.NAVX_REG_WHOAMI;
-        final int NAVX_REGISTER_PROC_FIRST      = IMURegisters.NAVX_REG_SENSOR_STATUS_L;
-        final int NAVX_REGISTER_RAW_FIRST       = IMURegisters.NAVX_REG_QUAT_W_L;
-        final int I2C_TIMEOUT_MS                = 500;
 
         public navXIOThread( int port, int update_rate_hz, DeviceDataType data_type,
                              AHRSProtocol.AHRSPosUpdate ahrspos_update) {
@@ -974,7 +985,7 @@ public class AHRS {
             this.io_thread_event = new Object();
             this.reset_yaw_critical_section = new Object();
 
-            android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_MORE_FAVORABLE);
+            Process.setThreadPriority(Process.THREAD_PRIORITY_MORE_FAVORABLE);
         }
 
         public void start() {
@@ -1347,22 +1358,6 @@ public class AHRS {
 
     }
 
-    enum DimState {
-        UNKNOWN,
-        WAIT_FOR_MODE_CONFIG_COMPLETE,
-        WAIT_FOR_I2C_TRANSFER_COMPLETION,
-        WAIT_FOR_HOST_BUFFER_TRANSFER_COMPLETION,
-        READY
-    }
-
-    private static DimStateTracker global_dim_state_tracker;
-    public DimStateTracker getDimStateTrackerInstance() {
-        if ( global_dim_state_tracker == null ) {
-            global_dim_state_tracker = new DimStateTracker();
-        }
-        return global_dim_state_tracker;
-    }
-
     public class DimStateTracker {
         private boolean read_mode;
         private int device_address;
@@ -1398,14 +1393,14 @@ public class AHRS {
                     ( this.num_bytes == num_bytes ));
         }
 
-        public void setState( DimState new_state ) {
-            this.state = new_state;
-        }
-
         public DimState getState() {
             return this.state;
         }
-    };
+
+        public void setState(DimState new_state) {
+            this.state = new_state;
+        }
+    }
 
     public class DimI2cDeviceWriter {
         private final I2cDevice device;
@@ -1513,15 +1508,15 @@ public class AHRS {
         private final int dev_address;
         private final int mem_address;
         private final int num_bytes;
-        private byte[] device_data;
-        private Object synchronization_event;
-        private boolean registered;
         I2cController.I2cPortReadyCallback callback;
         IoCallback ioCallback;
         DimState dim_state;
         DimStateTracker state_tracker;
         long read_start_timestamp;
         long timeout_ms;
+        private byte[] device_data;
+        private Object synchronization_event;
+        private boolean registered;
         private boolean busy;
         private boolean continuous_read;
         private boolean continuous_first;

@@ -9,8 +9,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.opencv.photo.Photo;
-
 public class Teleop extends OpMode {
 
     DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -20,11 +18,6 @@ public class Teleop extends OpMode {
     Controller secondController;
     DcMotor goalOne, goalTwo;
     double modfier = 0.25;
-    private enum LiftStatus {
-        LEFT,
-        RIGHT,
-        CENTER
-    }
     LiftStatus status;
     Timers robotTimer;
 
@@ -65,7 +58,7 @@ public class Teleop extends OpMode {
                 modfier = 1;
         }
         telemetry.addData("mod",modfier);
-        Tank.motor4(frontLeft, frontRight, backLeft, backRight, -firstController.left_stick_y*modfier,
+        Tank.motor4(frontLeft, frontRight, backLeft, backRight, -1 * firstController.left_stick_y * modfier,
                 firstController.right_stick_y*modfier);
 
         //Hanging
@@ -150,5 +143,11 @@ public class Teleop extends OpMode {
         goalOne.setPower(0);
         goalTwo.setPower(0);
         lift.setPower(0);
+    }
+
+    private enum LiftStatus {
+        LEFT,
+        RIGHT,
+        CENTER
     }
 }

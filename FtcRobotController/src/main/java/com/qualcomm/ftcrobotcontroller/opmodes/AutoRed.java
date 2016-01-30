@@ -23,7 +23,7 @@ import java.text.DecimalFormat;
 /**
  * Vision-enabled opmode
  */
-public class Auto extends LinearVisionOpMode {
+public class AutoRed extends LinearVisionOpMode {
     private static final int TOLERANCE_DEGREES = 5;
     private final int NAVX_DIM_I2C_PORT = 1;
     private final byte NAVX_DEVICE_UPDATE_RATE_HZ = 50;
@@ -107,15 +107,15 @@ public class Auto extends LinearVisionOpMode {
         //NavX2 untested, not using - but power must be set to 1 for v2
         runForEncoderCounts(250, power);
         block(250);
-        turnToDegNavX(35, -.789);
+        turnToDegNavX(325, .789);
         block(500);
         runForEncoderCounts(5000, power);
         block(500);
-        turnToDegNavX(340, .789);
+        turnToDegNavX(20, -.789);
         block(1000);
         runForEncoderCounts(2200, power);
         block(500);
-        turnToDegNavX(280, .789);
+        turnToDegNavX(80, -.789);
         block(500);
         runForEncoderCounts(1000, -power);
 
@@ -235,7 +235,6 @@ public class Auto extends LinearVisionOpMode {
             if (power > 0 && yaw < deg + TOLERANCE_DEGREES) arrived = true;
             if (power < 0 && yaw > deg - TOLERANCE_DEGREES) arrived = true;
         } while (!arrived);
-
         //while((power > 0 && convertDegNavX(navx.getYaw()) > deg + TOLERANCE_DEGREES ) ||(power < 0 && convertDegNavX(navx.getYaw()) < deg-TOLERANCE_DEGREES)) {
 
         frontLeft.setPower(0);
