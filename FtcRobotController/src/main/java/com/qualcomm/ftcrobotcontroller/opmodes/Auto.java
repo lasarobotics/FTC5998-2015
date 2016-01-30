@@ -224,18 +224,25 @@ public class Auto extends LinearVisionOpMode {
         backLeft.setPower(power);
         backRight.setPower(-power);
 
-        while (!MathUtil.inBounds(deg - TOLERANCE_DEGREES, deg + TOLERANCE_DEGREES, convertDegNavX(navx.getYaw()))) {
-        //while((power > 0 && convertDegNavX(navx.getYaw()) > deg + TOLERANCE_DEGREES ) ||(power < 0 && convertDegNavX(navx.getYaw()) < deg-TOLERANCE_DEGREES)) {
-            Log.d("gyro", navx.getYaw() + " ");
-        telemetry.addData("gyro", navx.getYaw());
+        //while (!MathUtil.inBounds(deg - TOLERANCE_DEGREES, deg + TOLERANCE_DEGREES, convertDegNavX(navx.getYaw()))) {
+        boolean arrived = deg == 0;
+        do {
             waitOneFullHardwareCycle();
-        }
+            float yaw = navx.getYaw();
+            Log.d("Yaw", yaw + "");
+            if (MathUtil.inBounds(deg - TOLERANCE_DEGREES, deg + TOLERANCE_DEGREES, yaw))
+                arrived = true;
+            if (power > 0 && yaw < deg + TOLERANCE_DEGREES) arrived = true;
+            if (power < 0 && yaw > deg - TOLERANCE_DEGREES) arrived = true;
+        } while (!arrived);
 
+        //while((power > 0 && convertDegNavX(navx.getYaw()) > deg + TOLERANCE_DEGREES ) ||(power < 0 && convertDegNavX(navx.getYaw()) < deg-TOLERANCE_DEGREES)) {
 
         frontLeft.setPower(0);
         frontRight.setPower(0);
         backLeft.setPower(0);
         backRight.setPower(0);
+        waitOneFullHardwareCycle();
     }
     public float convertDegNavX(float deg){
         if (deg < 0)
