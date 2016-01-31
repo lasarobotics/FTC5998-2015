@@ -124,7 +124,7 @@ public class AutoBlue extends LinearOpMode {
         block(1000);
         runForEncoderCounts(2200, powerForward);
         block(500);
-        turnToDegNavX(-90, -powerRot);
+        turnToDegNavX(-80, -powerRot);
         block(500);
         runForEncoderCounts(1000, -powerForward);
 

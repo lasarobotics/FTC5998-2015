@@ -8,36 +8,34 @@ import com.lasarobotics.library.drive.Tank;
 import com.lasarobotics.library.util.MathUtil;
 import com.lasarobotics.library.util.RollingAverage;
 import com.lasarobotics.library.util.Timers;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.lasarobotics.vision.android.Cameras;
 import org.lasarobotics.vision.ftc.resq.Beacon;
-import org.lasarobotics.vision.opmode.LinearVisionOpMode;
-import org.opencv.core.Size;
 
 import java.text.DecimalFormat;
 
 /**
  * Vision-enabled opmode
  */
-public class AutoRed extends LinearVisionOpMode {
+public class AutoRed extends LinearOpMode {
     private static final int TOLERANCE_DEGREES = 5;
     private final int NAVX_DIM_I2C_PORT = 1;
     private final byte NAVX_DEVICE_UPDATE_RATE_HZ = 50;
     DecimalFormat df = new DecimalFormat("#.##");
-    private DcMotor frontLeft, frontRight, backLeft, backRight,intake;
+    private DcMotor frontLeft, frontRight, backLeft, backRight, intake;
     private GyroSensor gyro;
-    private Servo slide, dump,carabiner,climber;
+    private Servo slide, dump, carabiner, climber;
     private AHRS navx;
 
     public double limit(double a) {
         return MathUtil.deadband(0.02, MathUtil.coerce(-1, 1, a));
     }
 
-    private void visionSetup() throws InterruptedException {
+    /*private void visionSetup() throws InterruptedException {
         //Wait for vision to initialize - this should be the first thing you do
         waitForVisionStart();
 
@@ -63,9 +61,9 @@ public class AutoRed extends LinearVisionOpMode {
         //Set the beacon analysis method
         //Try them all and see what works!
         beacon.setAnalysisMethod(Beacon.AnalysisMethod.FAST);
-    }
+    }*/
 
-    private void setup() {
+    private void setup() throws InterruptedException {
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
         frontRight = hardwareMap.dcMotor.get("frontRight");
         backLeft = hardwareMap.dcMotor.get("backLeft");
@@ -75,6 +73,13 @@ public class AutoRed extends LinearVisionOpMode {
         dump = hardwareMap.servo.get("dump");
         carabiner = hardwareMap.servo.get("carabiner");
         climber = hardwareMap.servo.get("climber");
+
+        frontLeft.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+        frontRight.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+        backLeft.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+        backRight.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+
+        block(200);
 
         frontLeft.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
         frontRight.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
@@ -92,32 +97,36 @@ public class AutoRed extends LinearVisionOpMode {
                 NAVX_DIM_I2C_PORT,
                 AHRS.DeviceDataType.kProcessedData,
                 NAVX_DEVICE_UPDATE_RATE_HZ);
+        block(500);
+        navx.zeroYaw();
     }
 
     @Override
     public void runOpMode() throws InterruptedException {
-        visionSetup();
+        //visionSetup();
         setup();
         waitForStart();
 
         //Run
         //intake.setPower(1);
-        final double power = 1;
+        final double powerForward = 1;
+        final double powerRot = 0.5; //.789
 
         //NavX2 untested, not using - but power must be set to 1 for v2
-        runForEncoderCounts(250, power);
+        //runForEncoderCounts(250, powerForward);
+        intake.setPower(1);
         block(250);
-        turnToDegNavX(325, .789);
+        turnToDegNavX(-35, -powerRot);
         block(500);
-        runForEncoderCounts(5000, power);
+        runForEncoderCounts(5000, powerForward);
         block(500);
-        turnToDegNavX(20, -.789);
+        turnToDegNavX(35, powerRot);
         block(1000);
-        runForEncoderCounts(2200, power);
+        runForEncoderCounts(2200, powerForward);
         block(500);
-        turnToDegNavX(80, -.789);
+        turnToDegNavX(80, powerRot);
         block(500);
-        runForEncoderCounts(1000, -power);
+        runForEncoderCounts(1000, -powerForward);
 
         int goodCount = 0;
         String lastString = null;
@@ -125,7 +134,7 @@ public class AutoRed extends LinearVisionOpMode {
         Beacon.BeaconColor right;
 
         //Goal is to get X good frames in a row
-        while (goodCount < 10) {
+        /*(while (goodCount < 10) {
             String colorString = beacon.getAnalysis().getColorString();
 
             telemetry.addData("Good count", goodCount);
@@ -151,7 +160,7 @@ public class AutoRed extends LinearVisionOpMode {
             lastString = colorString;
         }
 
-        Log.w("BEACON STATE", beacon.getAnalysis().getColorString());
+        Log.w("BEACON STATE", beacon.getAnalysis().getColorString());*/
 
         //Dump
         //intake.setPower(0);
@@ -164,6 +173,7 @@ public class AutoRed extends LinearVisionOpMode {
         frontRight.setPower(0);
         backLeft.setPower(0);
         backRight.setPower(0);
+        intake.setPower(0);
         waitOneFullHardwareCycle();
         telemetry.addData("status", "done");
     }
@@ -171,7 +181,7 @@ public class AutoRed extends LinearVisionOpMode {
     private void block(int ms) throws InterruptedException {
         Timers mTimers = new Timers();
         mTimers.startClock("delay");
-        while (mTimers.getClockValue("delay")< ms){
+        while (mTimers.getClockValue("delay") < ms) {
             waitOneFullHardwareCycle();
         }
         waitOneFullHardwareCycle();
@@ -187,14 +197,43 @@ public class AutoRed extends LinearVisionOpMode {
         frontRight.setPower(power);
         backLeft.setPower(power);
         backRight.setPower(power);
-        waitOneFullHardwareCycle();
-        while ( Math.abs(backRight.getCurrentPosition()) < counts){
+        while (Math.abs(backRight.getCurrentPosition()) < counts) {
             waitOneFullHardwareCycle();
             Log.d("encoder", backLeft.getCurrentPosition() + "bl");
-            Log.d("encoder",backRight.getCurrentPosition() + "br");
-            Log.d("encoder",frontLeft.getCurrentPosition() + "fl");
-            Log.d("encoder",frontRight.getCurrentPosition() + "fr");
+            Log.d("encoder", backRight.getCurrentPosition() + "br");
+            Log.d("encoder", frontLeft.getCurrentPosition() + "fl");
+            Log.d("encoder", frontRight.getCurrentPosition() + "fr");
+        }
+        frontLeft.setPower(0);
+        frontRight.setPower(0);
+        backLeft.setPower(0);
+        backRight.setPower(0);
+    }
 
+    public void turnToDegEncoder(double counts, double power) throws InterruptedException {
+        frontLeft.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+        frontRight.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+        backLeft.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+        backRight.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+        block(100);
+        waitOneFullHardwareCycle();
+        frontLeft.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
+        frontRight.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
+        backLeft.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
+        backRight.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
+
+        frontLeft.setPower(-power);
+        frontRight.setPower(power);
+        backLeft.setPower(-power);
+        backRight.setPower(power);
+        waitOneFullHardwareCycle();
+
+        while (Math.abs(encoderAverage()) < counts) {
+            waitOneFullHardwareCycle();
+            Log.d("encoder", backLeft.getCurrentPosition() + "bl");
+            Log.d("encoder", backRight.getCurrentPosition() + "br");
+            Log.d("encoder", frontLeft.getCurrentPosition() + "fl");
+            Log.d("encoder", frontRight.getCurrentPosition() + "fr");
         }
 
         frontLeft.setPower(0);
@@ -203,37 +242,30 @@ public class AutoRed extends LinearVisionOpMode {
         backRight.setPower(0);
     }
 
-    public void turnToDegEncoder(double count, double power) throws InterruptedException {
-        frontLeft.setPower(power);
-        frontRight.setPower(-power);
-        backLeft.setPower(power);
-        backRight.setPower(-power);
+    public void turnToDegNavX(int deg, double power) throws InterruptedException {
+        navx.zeroYaw();
+        block(500);
+        frontLeft.setPower(-power);
+        frontRight.setPower(power);
+        backLeft.setPower(-power);
+        backRight.setPower(power);
         waitOneFullHardwareCycle();
 
-
-
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
-    }
-    public void turnToDegNavX(int deg, double power) throws InterruptedException{
-        navx.zeroYaw();
-        frontLeft.setPower(power);
-        frontRight.setPower(-power);
-        backLeft.setPower(power);
-        backRight.setPower(-power);
+        float yaw = 0.0f;
 
         //while (!MathUtil.inBounds(deg - TOLERANCE_DEGREES, deg + TOLERANCE_DEGREES, convertDegNavX(navx.getYaw()))) {
-        boolean arrived = deg == 0;
+        boolean arrived = false;
         do {
             waitOneFullHardwareCycle();
-            float yaw = navx.getYaw();
+            yaw = navx.getYaw();
             Log.d("Yaw", yaw + "");
+            telemetry.addData("Yaw", yaw + "");
             if (MathUtil.inBounds(deg - TOLERANCE_DEGREES, deg + TOLERANCE_DEGREES, yaw))
                 arrived = true;
-            if (power > 0 && yaw < deg + TOLERANCE_DEGREES) arrived = true;
-            if (power < 0 && yaw > deg - TOLERANCE_DEGREES) arrived = true;
+            if (power > 0 && yaw > deg - TOLERANCE_DEGREES) //clockwise
+                arrived = true;
+            if (power < 0 && yaw < deg + TOLERANCE_DEGREES) //counterclockwise
+                arrived = true;
         } while (!arrived);
         //while((power > 0 && convertDegNavX(navx.getYaw()) > deg + TOLERANCE_DEGREES ) ||(power < 0 && convertDegNavX(navx.getYaw()) < deg-TOLERANCE_DEGREES)) {
 
@@ -243,7 +275,8 @@ public class AutoRed extends LinearVisionOpMode {
         backRight.setPower(0);
         waitOneFullHardwareCycle();
     }
-    public float convertDegNavX(float deg){
+
+    public float convertDegNavX(float deg) {
         if (deg < 0)
             deg = 360 - Math.abs(deg);
         return deg;
@@ -292,11 +325,13 @@ public class AutoRed extends LinearVisionOpMode {
         backRight.setPower(0);
         backLeft.setPower(0);
     }
-    public int encoderAverage(){
-        return (frontLeft.getCurrentPosition() +
-                frontRight.getCurrentPosition() +
-                backLeft.getCurrentPosition() +
-                backRight.getCurrentPosition())/4;
-    }
 
+    public int encoderAverage() {
+        double left = (frontLeft.getCurrentPosition() + backLeft.getCurrentPosition()) / 2;
+        double right = (frontRight.getCurrentPosition() + backRight.getCurrentPosition()) / 2;
+
+        //clockwise = positive
+        //forward = positive
+        return (int) ((Math.abs(left) + Math.abs(right)) / 2 * Math.signum(left));
+    }
 }
